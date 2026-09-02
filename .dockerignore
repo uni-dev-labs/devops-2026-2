@@ -1,0 +1,10 @@
+
+· DOCKERIGNORE
+node_modules
+dist
+.git
+.env
+*.log
+README.md
+.dockerignore
+ 
