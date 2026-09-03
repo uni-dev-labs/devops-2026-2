@@ -74,8 +74,8 @@ Body esperado en POST `/users`:
 ![alt text](image.png)
 
 ### 2. Pruebas de Salud y Endpoints
-![alt text](image-1.png)
+![alt text](image2.png)
 
 ### 3. Logs y apagado del Stack
-![alt text](image-2.png)
+![alt text](image3.png)
 
