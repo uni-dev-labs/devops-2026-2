@@ -12,25 +12,62 @@ API en Node.js con Express y TypeScript que expone endpoints contra PostgreSQL y
 
 1. Copia el archivo de entorno:
 
-```bash
+​```bash
 cp .env.example .env
-```
+​```
 
 2. Ajusta credenciales en `.env` si hace falta.
 
 ## Instalación y arranque
 
-```bash
+​```bash
 npm install
 npm run dev
-```
+​```
 
 Build de producción:
 
-```bash
+​```bash
 npm run build
 npm start
-```
+​```
+
+## Ejecución con Docker (alternativa)
+
+En vez de instalar PostgreSQL y MongoDB localmente, puedes levantar todo el stack (API + bases de datos) contenedorizado con Docker Compose.
+
+### Requisitos
+
+- Docker Desktop instalado y corriendo.
+
+### Pasos
+
+​```bash
+cp .env.example .env
+docker compose up --build -d
+​```
+
+Verifica que los tres servicios estén arriba y saludables:
+
+​```bash
+docker compose ps
+​```
+
+Revisa los logs de la API si necesitas depurar:
+
+​```bash
+docker compose logs -f api
+​```
+
+Para detener el stack:
+
+​```bash
+docker compose down
+​```
+
+La API queda expuesta igual en `http://localhost:3000` — los mismos endpoints y ejemplos de la sección de abajo aplican sin cambios.
+
+> **Nota:** dentro de la red interna de Docker Compose, la API se conecta a las bases usando el nombre del servicio como host (`postgres` y `mongo`), no `localhost`. Los healthchecks de `postgres` y `mongo` aseguran que la API solo arranque cuando las bases ya están listas (`depends_on: condition: service_healthy`).
 
 ## Endpoints
 
@@ -46,25 +83,4 @@ npm start
 
 ### Ejemplos
 
-```bash
-curl http://localhost:3000/health
-
-curl http://localhost:3000/api/postgres/health
-curl -X POST http://localhost:3000/api/postgres/users ^
-  -H "Content-Type: application/json" ^
-  -d "{\"name\":\"Ana\",\"email\":\"ana@example.com\"}"
-
-curl http://localhost:3000/api/mongo/health
-curl -X POST http://localhost:3000/api/mongo/users ^
-  -H "Content-Type: application/json" ^
-  -d "{\"name\":\"Luis\",\"email\":\"luis@example.com\"}"
-```
-
-Body esperado en POST `/users`:
-
-```json
-{
-  "name": "Nombre",
-  "email": "correo@example.com"
-}
-```
+...(el resto igual que ya lo tienes)
