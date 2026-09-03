@@ -1,70 +1,114 @@
-# Express + TypeScript API (PostgreSQL + MongoDB)
+# API Express + TypeScript con Docker
 
-API en Node.js con Express y TypeScript que expone endpoints contra PostgreSQL y MongoDB.
+## 🚀 Descripción
 
-## Requisitos
+API REST en Node.js/Express con TypeScript, conectada a PostgreSQL y MongoDB.  
+Ahora dockerizada para correr en cualquier máquina con un entorno consistente.
 
-- Node.js 18+
-- PostgreSQL en ejecución
-- MongoDB en ejecución
+---
 
-## Configuración
+## 📋 Requisitos
 
-1. Copia el archivo de entorno:
+- Node.js 18+ (solo para desarrollo local)
+- Docker Desktop instalado y corriendo
+- Git
 
-```bash
-cp .env.example .env
-```
+---
 
-2. Ajusta credenciales en `.env` si hace falta.
+## ⚙️ Instalación y arranque
 
-## Instalación y arranque
-
-```bash
-npm install
-npm run dev
-```
-
-Build de producción:
+### Clonar el repositorio
 
 ```bash
-npm run build
-npm start
+git clone https://github.com/uni-dev-labs/devops-2026-2.git
+cd devops-2026-2
+git checkout -b practica/docker-tu-apellido
 ```
 
-## Endpoints
+## Copiar variables de entorno
 
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/health` | Health del API |
-| GET | `/api/postgres/health` | Health de PostgreSQL |
-| GET | `/api/postgres/users` | Lista usuarios (Postgres) |
-| POST | `/api/postgres/users` | Crea usuario (Postgres) |
-| GET | `/api/mongo/health` | Health de MongoDB |
-| GET | `/api/mongo/users` | Lista usuarios (Mongo) |
-| POST | `/api/mongo/users` | Crea usuario (Mongo) |
+- copy .env.example .env # En PowerShell
 
-### Ejemplos
+## Instalar dependencias
 
-```bash
-curl http://localhost:3000/health
+- npm install
+- npm run typecheck
 
-curl http://localhost:3000/api/postgres/health
-curl -X POST http://localhost:3000/api/postgres/users ^
-  -H "Content-Type: application/json" ^
-  -d "{\"name\":\"Ana\",\"email\":\"ana@example.com\"}"
+## Construir y levantar el stack:
 
-curl http://localhost:3000/api/mongo/health
-curl -X POST http://localhost:3000/api/mongo/users ^
-  -H "Content-Type: application/json" ^
-  -d "{\"name\":\"Luis\",\"email\":\"luis@example.com\"}"
-```
+- bash
+- docker compose up --build -d
+- Verificar servicios:
 
-Body esperado en POST `/users`:
+- bash
+- docker compose ps
+- docker compose logs -f api
 
-```json
+## Detener contenedores:
+
+- bash
+- docker compose down
+
+## Puertos expuestos
+
+- API → http://localhost:3000
+
+- PostgreSQL → localhost:5432
+
+- MongoDB → localhost:27017
+
+## 🔗 Endpoints
+
+- GET /health → estado general de la API
+
+- GET /api/postgres/health → conexión con PostgreSQL
+
+- GET /api/mongo/health → conexión con MongoDB
+
+- POST /api/postgres/users → crear usuario en Postgres
+
+- POST /api/mongo/users → crear usuario en Mongo
+
+# Eejemplo del POST
+
 {
-  "name": "Nombre",
-  "email": "correo@example.com"
+"name": "Ana",
+"email": "ana@example.com"
 }
-```
+
+## 📸 Evidencia
+
+# Docker Compose
+
+![alt text](image.png)
+
+# Logs de la API
+
+- Mongo:
+  ![alt text](image-1.png)
+
+- PostgreSQL:
+  ![alt text](image-2.png)
+
+# Pruebas en POSTMAN
+
+- API:
+  ![alt text](image-3.png)
+
+- PosgreSQL:
+  ![alt text](image-4.png)
+
+- Mongo:
+  ![alt text](image-5.png)
+
+## ✅ Checklist de aceptación
+
+docker compose up --build -d levanta api, postgres y mongo sin errores.
+
+Endpoints /health, /api/postgres/health, /api/mongo/health responden OK.
+
+Inserción de usuarios funciona en ambas bases.
+
+Existen Dockerfile, .dockerignore, docker-compose.yml y README actualizado.
+
+La API usa nombres de servicio Docker (no localhost) para conectar a las bases.
