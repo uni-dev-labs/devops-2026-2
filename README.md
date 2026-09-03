@@ -68,3 +68,14 @@ Body esperado en POST `/users`:
   "email": "correo@example.com"
 }
 ```
+## Evidencias de Ejecución
+
+### 1. Estado de los contenedores
+![alt text](image.png)
+
+### 2. Pruebas de Salud y Endpoints
+![alt text](image-1.png)
+
+### 3. Logs y apagado del Stack
+![alt text](image-2.png)
+
