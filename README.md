@@ -8,6 +8,29 @@ API en Node.js con Express y TypeScript que expone endpoints contra PostgreSQL y
 - PostgreSQL en ejecución
 - MongoDB en ejecución
 
+## Arranque con Docker (recomendado)
+
+No necesitas instalar Postgres ni Mongo localmente: Docker Compose levanta todo el stack
+(API + PostgreSQL + MongoDB) en su propia red.
+
+Requisitos: Docker Desktop instalado y corriendo.
+
+```bash
+cp .env.example .env
+docker compose up --build -d
+```
+
+Comandos útiles:
+
+```bash
+docker compose ps          # ver estado de los servicios
+docker compose logs -f api # ver logs de la API
+docker compose down        # apagar y remover contenedores
+```
+
+La API queda disponible en `http://localhost:3000`. Dentro de la red de Docker, la API se
+conecta a las bases usando los nombres de los servicios (`postgres` y `mongo`), no `localhost`.
+
 ## Configuración
 
 1. Copia el archivo de entorno:
