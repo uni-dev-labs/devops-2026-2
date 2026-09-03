@@ -18,7 +18,9 @@ cp .env.example .env
 
 2. Ajusta credenciales en `.env` si hace falta.
 
-## Instalación y arranque
+## Instalación y arranque (sin Docker)
+
+Requiere PostgreSQL y MongoDB corriendo localmente.
 
 ```bash
 npm install
@@ -31,6 +33,46 @@ Build de producción:
 npm run build
 npm start
 ```
+
+## Arranque con Docker (recomendado)
+
+Requisitos: Docker Desktop instalado y corriendo.
+
+```bash
+# 1. Copia el archivo de entorno (Compose lo lee automáticamente)
+cp .env.example .env
+
+# 2. Levanta api + postgres + mongo
+docker compose up --build -d
+
+# 3. Verifica el estado de los contenedores
+docker compose ps
+
+# 4. Sigue los logs de la API
+docker compose logs -f api
+
+# 5. Para apagar el stack
+docker compose down
+```
+
+También puedes usar los scripts de npm:
+
+```bash
+npm run docker:up     # docker compose up --build -d
+npm run docker:logs   # docker compose logs -f api
+npm run docker:down   # docker compose down
+```
+
+Dentro de la red de Docker, la API se conecta a las bases usando el **nombre del
+servicio**, no `localhost`:
+
+- PostgreSQL → `postgres:5432`
+- MongoDB → `mongodb://mongo:27017`
+
+Desde tu máquina (host) sigues accediendo a la API en `http://localhost:3000`.
+
+Los datos de PostgreSQL y MongoDB persisten entre reinicios gracias a los
+volúmenes `postgres_data` y `mongo_data` definidos en `docker-compose.yml`.
 
 ## Endpoints
 
