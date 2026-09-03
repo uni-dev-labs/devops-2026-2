@@ -20,6 +20,42 @@ cp .env.example .env
 
 ## Instalación y arranque
 
+### Con Docker Compose (Recomendado)
+
+Requisitos: Docker y Docker Compose instalados y en ejecución.
+
+1. Levantar todos los servicios (API + PostgreSQL + MongoDB):
+```bash
+docker compose up --build -d
+# O usando npm:
+npm run docker:up
+```
+
+2. Ver el estado de los contenedores:
+```bash
+docker compose ps
+```
+
+3. Ver los logs de la API:
+```bash
+docker compose logs -f api
+# O usando npm:
+npm run docker:logs
+```
+
+4. Detener el stack:
+```bash
+docker compose down
+# O usando npm:
+npm run docker:down
+```
+
+---
+
+### Local (Sin Docker)
+
+Requisitos: Node.js 18+, PostgreSQL y MongoDB corriendo localmente.
+
 ```bash
 npm install
 npm run dev
