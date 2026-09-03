@@ -1,70 +1,40 @@
-# Express + TypeScript API (PostgreSQL + MongoDB)
+##  Levantar el proyecto con Docker
 
-API en Node.js con Express y TypeScript que expone endpoints contra PostgreSQL y MongoDB.
+### Requisitos
+- Docker Desktop instalado y corriendo
 
-## Requisitos
+### Pasos
 
-- Node.js 18+
-- PostgreSQL en ejecución
-- MongoDB en ejecución
-
-## Configuración
-
-1. Copia el archivo de entorno:
-
+1. Copia las variables de entorno:
 ```bash
-cp .env.example .env
+   cp .env.example .env
 ```
 
-2. Ajusta credenciales en `.env` si hace falta.
-
-## Instalación y arranque
-
+2. Levanta el stack completo (API + PostgreSQL + MongoDB):
 ```bash
-npm install
-npm run dev
+   docker compose up --build -d
 ```
 
-Build de producción:
-
+3. Verifica que los 3 contenedores estén corriendo y healthy:
 ```bash
-npm run build
-npm start
+   docker compose ps
 ```
 
-## Endpoints
-
-| Método | Ruta | Descripción |
-|--------|------|-------------|
-| GET | `/health` | Health del API |
-| GET | `/api/postgres/health` | Health de PostgreSQL |
-| GET | `/api/postgres/users` | Lista usuarios (Postgres) |
-| POST | `/api/postgres/users` | Crea usuario (Postgres) |
-| GET | `/api/mongo/health` | Health de MongoDB |
-| GET | `/api/mongo/users` | Lista usuarios (Mongo) |
-| POST | `/api/mongo/users` | Crea usuario (Mongo) |
-
-### Ejemplos
-
+4. Revisa los logs de la API si algo falla:
 ```bash
-curl http://localhost:3000/health
-
-curl http://localhost:3000/api/postgres/health
-curl -X POST http://localhost:3000/api/postgres/users ^
-  -H "Content-Type: application/json" ^
-  -d "{\"name\":\"Ana\",\"email\":\"ana@example.com\"}"
-
-curl http://localhost:3000/api/mongo/health
-curl -X POST http://localhost:3000/api/mongo/users ^
-  -H "Content-Type: application/json" ^
-  -d "{\"name\":\"Luis\",\"email\":\"luis@example.com\"}"
+   docker compose logs -f api
 ```
 
-Body esperado en POST `/users`:
-
-```json
-{
-  "name": "Nombre",
-  "email": "correo@example.com"
-}
+5. Prueba los endpoints:
+```bash
+   curl http://localhost:3000/health
+   curl http://localhost:3000/api/postgres/health
+   curl http://localhost:3000/api/mongo/health
 ```
+
+6. Apaga el stack:
+```bash
+   docker compose down
+```
+
+**Nota:** el puerto de PostgreSQL se expone en `5433` en el host (en vez de `5432`) para evitar conflicto con instalaciones locales de Postgres. Internamente, dentro de la red de Docker, la API sigue conectándose por `postgres:5432`.
