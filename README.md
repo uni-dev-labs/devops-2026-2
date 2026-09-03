@@ -32,6 +32,30 @@ npm run build
 npm start
 ```
 
+## Arranque con Docker
+
+Requiere Docker Desktop instalado y corriendo. Levanta la API junto con PostgreSQL y MongoDB en contenedores:
+
+```bash
+docker compose up --build -d
+```
+
+O usando los scripts npm:
+
+```bash
+npm run docker:up     # build + up en segundo plano
+npm run docker:logs   # sigue los logs de la API
+npm run docker:down   # detiene y elimina los contenedores
+```
+
+Verifica el estado de los servicios:
+
+```bash
+docker compose ps
+```
+
+La API queda disponible en `http://localhost:3000`. Dentro de la red de Docker, la API se conecta a las bases usando los nombres de servicio `postgres` y `mongo` (no `localhost`).
+
 ## Endpoints
 
 | Método | Ruta | Descripción |
