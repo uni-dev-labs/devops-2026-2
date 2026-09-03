@@ -68,3 +68,16 @@ Body esperado en POST `/users`:
   "email": "correo@example.com"
 }
 ```
+## Cómo ejecutar el proyecto con Docker
+
+Este proyecto está contenedorizado, por lo que no necesitas instalar Node, PostgreSQL o MongoDB en tu máquina local.
+
+1. Asegúrate de tener **Docker Desktop** instalado y ejecutándose.
+2. Copia las variables de entorno si aún no lo has hecho:
+   `cp .env.example .env`
+3. Levanta toda la infraestructura (API, Postgres, Mongo):
+   `npm run docker:up` o `docker compose up --build -d`
+4. Para ver los logs de la API y confirmar que conectó exitosamente:
+   `npm run docker:logs` o `docker compose logs -f api`
+5. Para detener y eliminar los contenedores:
+   `npm run docker:down` o `docker compose down`
