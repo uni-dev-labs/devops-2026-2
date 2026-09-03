@@ -31,6 +31,13 @@ Build de producción:
 npm run build
 npm start
 ```
+## Despliegue con Docker
+
+Para ejecutar todo el stack (API + PostgreSQL + MongoDB) dentro de contenedores:
+
+1. Asegúrate de tener el archivo de variables configurado:
+   ```bash
+   cp .env.example .env
 
 ## Endpoints
 
@@ -68,3 +75,19 @@ Body esperado en POST `/users`:
   "email": "correo@example.com"
 }
 ```
+
+## Evidencias de Ejecución
+
+### 1. Estado de los contenedores
+![Estado de los contenedores](image.png)
+![Estado de los contenedores](image-0.1.png)
+
+### 2. Pruebas de Salud y Endpoints
+![Pruebas de salud](image-1.png)
+![Pruebas de salud](image-1.1.png)
+
+### 3. Creación y consulta de usuarios (PostgreSQL y MongoDB)
+![Pruebas de usuarios](image-4.png)
+
+### 4. Logs y apagado del Stack
+![alt text](image-2.png)
