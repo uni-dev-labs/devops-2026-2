@@ -54,6 +54,31 @@ curl -X POST http://localhost:3000/api/postgres/users ^
   -H "Content-Type: application/json" ^
   -d "{\"name\":\"Ana\",\"email\":\"ana@example.com\"}"
 
+## Levantar con Docker
+
+1. Copia el archivo de variables de entorno:
+   \`\`\`
+   copy .env.example .env
+   \`\`\`
+2. Construye y levanta el stack:
+   \`\`\`
+   docker compose up --build -d
+   \`\`\`
+3. Verifica que los contenedores estén sanos:
+   \`\`\`
+   docker compose ps
+   \`\`\`
+4. Prueba los endpoints:
+   \`\`\`
+   curl http://localhost:3000/health
+   curl http://localhost:3000/api/postgres/health
+   curl http://localhost:3000/api/mongo/health
+   \`\`\`
+5. Para detener todo:
+   \`\`\`
+   docker compose down
+   \`\`\`
+
 curl http://localhost:3000/api/mongo/health
 curl -X POST http://localhost:3000/api/mongo/users ^
   -H "Content-Type: application/json" ^
