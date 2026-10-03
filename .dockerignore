@@ -4,3 +4,8 @@ dist
 .env
 *.log
 README.md
+
+.gitignore
+Dockerfile
+docker-compose.yml
+.npm
