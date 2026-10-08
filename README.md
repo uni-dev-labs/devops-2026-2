@@ -73,6 +73,8 @@ npm start
 | GET | `/api/redis/health` | Health de Redis |
 | GET | `/api/redis/users` | Lista usuarios (Redis) |
 | POST | `/api/redis/users` | Crea usuario (Redis) |
+| GET | `/api/products` | Lista productos (MongoDB) |
+| POST | `/api/products` | Crea un producto (MongoDB) |
 
 ### Ejemplos
 
@@ -94,6 +96,11 @@ curl http://localhost:3000/api/redis/users
 curl -X POST http://localhost:3000/api/redis/users ^
   -H "Content-Type: application/json" ^
   -d "{\"name\":\"Eva\",\"email\":\"eva@example.com\"}"
+
+curl http://localhost:3000/api/products
+curl -X POST http://localhost:3000/api/products ^
+  -H "Content-Type: application/json" ^
+  -d "{\"name\":\"Teclado\",\"price\":120000}"
 ```
 
 Body esperado en POST `/users`:
