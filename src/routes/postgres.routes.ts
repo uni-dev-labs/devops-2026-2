@@ -89,3 +89,49 @@ postgresRouter.post("/users", async (req: Request, res: Response) => {
     });
   }
 });
+
+postgresRouter.put("/users/:id", async (req: Request, res: Response) => {
+  try {
+    const id = Number(req.params.id);
+    const { name, email } = req.body as { name?: string; email?: string };
+
+    if (!Number.isInteger(id) || id <= 0) {
+      res.status(400).json({ message: "id must be a positive integer" });
+      return;
+    }
+
+    if (!name && !email) {
+      res.status(400).json({ message: "name or email is required" });
+      return;
+    }
+
+    const result = await pgPool.query(
+      `UPDATE users
+       SET name = COALESCE($1, name), email = COALESCE($2, email)
+       WHERE id = $3
+       RETURNING id, name, email, created_at`,
+      [name ?? null, email ?? null, id]
+    );
+
+    if (result.rowCount === 0) {
+      res.status(404).json({ message: "User not found" });
+      return;
+    }
+
+    res.json({
+      database: "postgresql",
+      data: result.rows[0],
+    });
+  } catch (error) {
+    if ((error as { code?: string }).code === "23505") {
+      res.status(409).json({ message: "email already exists" });
+      return;
+    }
+    const message = error instanceof Error ? error.message : "Unknown error";
+    res.status(500).json({
+      status: "error",
+      database: "postgresql",
+      message,
+    });
+  }
+});
