@@ -18,7 +18,7 @@ cp .env.example .env
 
 2. Ajusta credenciales en `.env` si hace falta.
 
-## Arranque con Docker (API + Postgres + Mongo)
+## Arranque con Docker (API + Postgres + MongoDB + Redis)
 
 Levanta todo el stack:
 
@@ -33,10 +33,16 @@ npm run docker:logs
 npm run docker:down
 ```
 
+Ejecutar las pruebas localmente:
+
+```bash
+npm test
+```
+
 Solo bases de datos (API en local con `npm run dev`):
 
 ```bash
-docker compose up -d postgres mongo
+docker compose up -d postgres mongo redis
 ```
 
 ## Instalación y arranque local
@@ -64,6 +70,11 @@ npm start
 | GET | `/api/mongo/health` | Health de MongoDB |
 | GET | `/api/mongo/users` | Lista usuarios (Mongo) |
 | POST | `/api/mongo/users` | Crea usuario (Mongo) |
+| GET | `/api/redis/health` | Health de Redis |
+| GET | `/api/redis/users` | Lista usuarios (Redis) |
+| POST | `/api/redis/users` | Crea usuario (Redis) |
+| GET | `/api/products` | Lista productos (MongoDB) |
+| POST | `/api/products` | Crea un producto (MongoDB) |
 
 ### Ejemplos
 
@@ -79,6 +90,17 @@ curl http://localhost:3000/api/mongo/health
 curl -X POST http://localhost:3000/api/mongo/users ^
   -H "Content-Type: application/json" ^
   -d "{\"name\":\"Luis\",\"email\":\"luis@example.com\"}"
+
+curl http://localhost:3000/api/redis/health
+curl http://localhost:3000/api/redis/users
+curl -X POST http://localhost:3000/api/redis/users ^
+  -H "Content-Type: application/json" ^
+  -d "{\"name\":\"Eva\",\"email\":\"eva@example.com\"}"
+
+curl http://localhost:3000/api/products
+curl -X POST http://localhost:3000/api/products ^
+  -H "Content-Type: application/json" ^
+  -d "{\"name\":\"Teclado\",\"price\":120000}"
 ```
 
 Body esperado en POST `/users`:

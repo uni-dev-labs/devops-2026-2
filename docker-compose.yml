@@ -31,6 +31,20 @@ services:
       timeout: 5s
       retries: 10
 
+  redis:
+    image: redis:7-alpine
+    container_name: devops-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
   api:
     build: .
     container_name: devops-api
@@ -46,12 +60,16 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-app_db}
       MONGO_URI: mongodb://mongo:27017
       MONGO_DB: ${MONGO_DB:-app_db}
+      REDIS_URL: redis://redis:6379
     depends_on:
       postgres:
         condition: service_healthy
       mongo:
         condition: service_healthy
+      redis:
+        condition: service_healthy
 
 volumes:
   postgres_data:
   mongo_data:
+  redis_data:

@@ -13,4 +13,7 @@ export const env = {
     uri: process.env.MONGO_URI || "mongodb://localhost:27017",
     dbName: process.env.MONGO_DB || "app_db",
   },
+  redis: {
+    url: process.env.REDIS_URL || "redis://localhost:6379",
+  },
 };
