@@ -2,12 +2,14 @@ import express from "express";
 import cors from "cors";
 import { postgresRouter } from "./routes/postgres.routes.js";
 import { mongoRouter } from "./routes/mongo.routes.js";
+import { productsRouter } from "./routes/products.routes.js"; 
 
 export function createApp() {
   const app = express();
 
   app.use(cors());
   app.use(express.json());
+  app.use("/api/products", productsRouter); 
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", service: "express-ts-api" });
