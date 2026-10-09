@@ -64,6 +64,9 @@ npm start
 | GET | `/api/mongo/health` | Health de MongoDB |
 | GET | `/api/mongo/users` | Lista usuarios (Mongo) |
 | POST | `/api/mongo/users` | Crea usuario (Mongo) |
+| GET | `/api/courses` | Lista cursos (Postgres) |
+| GET | `/api/courses/:id` | Consulta un curso por id (Postgres) |
+| POST | `/api/courses` | Crea curso (Postgres) |
 
 ### Ejemplos
 
