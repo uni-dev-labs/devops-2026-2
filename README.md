@@ -5,8 +5,8 @@ API en Node.js con Express y TypeScript que expone endpoints contra PostgreSQL y
 ## Requisitos
 
 - Node.js 18+
-- PostgreSQL en ejecución
-- MongoDB en ejecución
+- Docker / Docker Compose (recomendado)
+- O PostgreSQL y MongoDB locales si no usas Docker
 
 ## Configuración
 
@@ -18,7 +18,28 @@ cp .env.example .env
 
 2. Ajusta credenciales en `.env` si hace falta.
 
-## Instalación y arranque
+## Arranque con Docker (API + Postgres + Mongo)
+
+Levanta todo el stack:
+
+```bash
+npm run docker:up
+```
+
+API en `http://localhost:3000`. Logs y parada:
+
+```bash
+npm run docker:logs
+npm run docker:down
+```
+
+Solo bases de datos (API en local con `npm run dev`):
+
+```bash
+docker compose up -d postgres mongo
+```
+
+## Instalación y arranque local
 
 ```bash
 npm install
