@@ -29,7 +29,7 @@ describe("API endpoints", () => {
     const res = await request(app).get("/health");
 
     expect(res.status).toBe(200);
-    expect(res.body).toEqual({ status: "ok", service: "express-ts-api" });
+    expect(res.body).toEqual({ status: "ok", service: "express-ts-api-Sarita" });
   });
 
   it("GET /api/postgres/users devuelve la lista de usuarios", async () => {
