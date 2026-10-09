@@ -12,7 +12,12 @@ vi.mock("../src/db/postgres.js", () => ({
 
 vi.mock("../src/db/mongo.js", () => ({
   getMongoDb: () => ({
-    collection: () => ({ insertOne: mongoInsertOne }),
+    collection: () => ({
+      insertOne: mongoInsertOne,
+      find: () => ({
+        toArray: async () => [],
+      }),
+    }),
   }),
 }));
 
@@ -70,4 +75,39 @@ describe("API endpoints", () => {
     });
     expect(mongoInsertOne).toHaveBeenCalledOnce();
   });
+    it("POST /api/products crea un producto y responde 201", async () => {
+    mongoInsertOne.mockResolvedValueOnce({ insertedId: "prod123" });
+
+    const res = await request(app)
+      .post("/api/products")
+      .send({
+        name: "Laptop",
+        price: 2500,
+      });
+
+    expect(res.status).toBe(201);
+
+    expect(res.body.data).toMatchObject({
+      _id: "prod123",
+      name: "Laptop",
+      price: 2500,
+    });
+
+    expect(mongoInsertOne).toHaveBeenCalledOnce();
+  });
+
+  it("POST /api/products sin price responde 400", async () => {
+    const res = await request(app)
+      .post("/api/products")
+      .send({
+        name: "Laptop",
+      });
+
+    expect(res.status).toBe(400);
+
+    expect(res.body).toEqual({
+      message: "name and price are required",
+    });
+  });
+
 });
