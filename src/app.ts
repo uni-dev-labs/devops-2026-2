@@ -17,6 +17,7 @@ export function createApp() {
   app.use("/api/postgres", postgresRouter);
   app.use("/api/mongo", mongoRouter);
   app.use("/api/products", productsRouter);
+
   app.use((_req, res) => {
     res.status(404).json({ message: "Route not found" });
   });
