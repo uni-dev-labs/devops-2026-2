@@ -42,8 +42,4 @@ describe("Products endpoints", () => {
     expect(res.body).toEqual({ message: "name and a positive price are required" });
     expect(mongoInsertOne).not.toHaveBeenCalled();
   });
-<<<<<<< HEAD
 });
-=======
-});
->>>>>>> origin/main
