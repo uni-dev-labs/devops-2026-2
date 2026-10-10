@@ -17,12 +17,10 @@ productsRouter.get("/", async (_req: Request, res: Response) => {
 // POST /api/products → crea un producto { name, price }
 productsRouter.post("/", async (req: Request, res: Response) => {
   const { name, price } = req.body as { name?: string; price?: number };
-
   if (!name || typeof price !== "number" || price <= 0) {
     res.status(400).json({ message: "name and a positive price are required" });
     return;
   }
-
   try {
     const doc = { name, price, createdAt: new Date() };
     const result = await getMongoDb().collection("products").insertOne(doc);
