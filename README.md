@@ -64,6 +64,9 @@ npm start
 | GET | `/api/mongo/health` | Health de MongoDB |
 | GET | `/api/mongo/users?page=1&limit=10` | Lista usuarios paginados (Mongo) |
 | POST | `/api/mongo/users` | Crea usuario (Mongo) |
+| GET | `/api/sweet-messages` | Lista mensajitos tiernos entre usuarios |
+| POST | `/api/sweet-messages` | Envía mensajito conectando Postgres y Mongo |
+| GET | `/api/sweet-messages/random` | Mensajito tierno aleatorio de aliento |
 
 ### Ejemplos
 
@@ -79,6 +82,12 @@ curl http://localhost:3000/api/mongo/health
 curl -X POST http://localhost:3000/api/mongo/users ^
   -H "Content-Type: application/json" ^
   -d "{\"name\":\"Luis\",\"email\":\"luis@example.com\"}"
+
+curl http://localhost:3000/api/sweet-messages
+curl http://localhost:3000/api/sweet-messages/random
+curl -X POST http://localhost:3000/api/sweet-messages ^
+  -H "Content-Type: application/json" ^
+  -d "{\"sender\":\"Daniel\",\"senderOrigin\":\"postgres\",\"receiver\":\"Compañeros\",\"receiverTarget\":\"mongo\",\"message\":\"¡Mucho éxito en la entrega! 💖\",\"category\":\"ánimo\",\"emoji\":\"💖\"}"
 ```
 
 Body esperado en POST `/users`:
@@ -89,6 +98,7 @@ Body esperado en POST `/users`:
   "email": "correo@example.com"
 }
 ```
+<<<<<<< Updated upstream
 ## Levantar con Docker
 
 ### Requisitos previos
@@ -159,3 +169,17 @@ Body esperado en POST `/users`:
 - **mongo** — MongoDB 7, expuesto en el puerto `27017`
 
 Dentro de la red de Docker, la API se conecta a las bases usando el nombre del servicio (`postgres` y `mongo`), no `localhost`.
+
+Body esperado en POST `/api/sweet-messages`:
+
+```json
+{
+  "sender": "Daniel Esteban",
+  "senderOrigin": "postgres",
+  "receiver": "Compañeros",
+  "receiverTarget": "mongo",
+  "message": "¡Mucho éxito en la entrega! 💖",
+  "category": "ánimo",
+  "emoji": "💖"
+}
+```
