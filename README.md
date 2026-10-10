@@ -64,6 +64,7 @@ npm start
 | GET | `/api/mongo/health` | Health de MongoDB |
 | GET | `/api/mongo/users` | Lista usuarios (Mongo) |
 | POST | `/api/mongo/users` | Crea usuario (Mongo) |
+| POST | `/api/tasks` | Crea una tarea (Mongo) |
 
 ### Ejemplos
 
@@ -79,6 +80,10 @@ curl http://localhost:3000/api/mongo/health
 curl -X POST http://localhost:3000/api/mongo/users ^
   -H "Content-Type: application/json" ^
   -d "{\"name\":\"Luis\",\"email\":\"luis@example.com\"}"
+
+curl -X POST http://localhost:3000/api/tasks ^
+  -H "Content-Type: application/json" ^
+  -d "{\"title\":\"Preparar el PR\",\"priority\":1}"
 ```
 
 Body esperado en POST `/users`:
