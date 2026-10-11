@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import request from "supertest";
 
 const { mongoInsertOne } = vi.hoisted(() => ({
@@ -16,6 +16,7 @@ vi.mock("../src/db/mongo.js", () => ({
 }));
 
 import { createApp } from "../src/app.js";
+
 const app = createApp();
 
 beforeEach(() => {
@@ -31,15 +32,23 @@ describe("Products endpoints", () => {
       .send({ name: "Teclado", price: 120000 });
 
     expect(res.status).toBe(201);
-    expect(res.body.data).toMatchObject({ _id: "p1", name: "Teclado", price: 120000 });
+    expect(res.body.data).toMatchObject({
+      _id: "p1",
+      name: "Teclado",
+      price: 120000,
+    });
     expect(mongoInsertOne).toHaveBeenCalledOnce();
   });
 
   it("POST /api/products sin precio responde 400", async () => {
-    const res = await request(app).post("/api/products").send({ name: "Teclado" });
+    const res = await request(app)
+      .post("/api/products")
+      .send({ name: "Teclado" });
 
     expect(res.status).toBe(400);
-    expect(res.body).toEqual({ message: "name and a positive price are required" });
+    expect(res.body).toEqual({
+      message: "name and a positive price are required",
+    });
     expect(mongoInsertOne).not.toHaveBeenCalled();
   });
 });
