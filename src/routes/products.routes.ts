@@ -3,9 +3,13 @@ import { getMongoDb } from "../db/mongo.js";
 
 export const productsRouter = Router();
 
+// GET /api/products: lista los productos
 productsRouter.get("/", async (_req: Request, res: Response) => {
   try {
-    const products = await getMongoDb().collection("products").find({}).toArray();
+    const products = await getMongoDb()
+      .collection("products")
+      .find({})
+      .toArray();
 
     res.json({
       database: "mongodb",
@@ -18,6 +22,7 @@ productsRouter.get("/", async (_req: Request, res: Response) => {
   }
 });
 
+// POST /api/products: crea un producto { name, price }
 productsRouter.post("/", async (req: Request, res: Response) => {
   const { name, price } = req.body as { name?: string; price?: number };
 
