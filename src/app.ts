@@ -11,7 +11,10 @@ export function createApp() {
   app.use(express.json());
 
   app.get("/health", (_req, res) => {
-    res.json({ status: "ok", service: "express-ts-api" });
+    res.json({
+      status: "ok",
+      service: "express-ts-api",
+    });
   });
 
   app.use("/api/postgres", postgresRouter);
@@ -19,7 +22,9 @@ export function createApp() {
   app.use("/api/products", productsRouter);
 
   app.use((_req, res) => {
-    res.status(404).json({ message: "Route not found" });
+    res.status(404).json({
+      message: "Route not found",
+    });
   });
 
   return app;
