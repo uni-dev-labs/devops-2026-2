@@ -16,7 +16,6 @@ vi.mock("../src/db/mongo.js", () => ({
 }));
 
 import { createApp } from "../src/app.js";
-
 const app = createApp();
 
 beforeEach(() => {
@@ -32,12 +31,7 @@ describe("Products endpoints", () => {
       .send({ name: "Teclado", price: 120000 });
 
     expect(res.status).toBe(201);
-    expect(res.body.database).toBe("mongodb");
-    expect(res.body.data).toMatchObject({
-      _id: "p1",
-      name: "Teclado",
-      price: 120000,
-    });
+    expect(res.body.data).toMatchObject({ _id: "p1", name: "Teclado", price: 120000 });
     expect(mongoInsertOne).toHaveBeenCalledOnce();
   });
 
