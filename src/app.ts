@@ -12,7 +12,7 @@ export function createApp() {
   app.use(express.json());
 
   app.get("/health", (_req, res) => {
-    res.json({ status: "ok", service: "express-ts-api-diego", version: "1.1.0" });
+    res.json({ status: "ok", service: "express-ts-api" });
   });
 
   app.use("/api/postgres", postgresRouter);
