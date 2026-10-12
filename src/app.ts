@@ -1,7 +1,10 @@
+
 import express from "express";
 import cors from "cors";
+
 import { postgresRouter } from "./routes/postgres.routes.js";
 import { mongoRouter } from "./routes/mongo.routes.js";
+import { inventoryRouter } from "./routes/inventory.routes.js";
 import { productsRouter } from "./routes/products.routes.js";
 
 export function createApp() {
@@ -17,6 +20,7 @@ export function createApp() {
   app.use("/api/postgres", postgresRouter);
   app.use("/api/mongo", mongoRouter);
   app.use("/api/products", productsRouter);
+  app.use("/api/inventory", inventoryRouter);
 
   app.use((_req, res) => {
     res.status(404).json({ message: "Route not found" });
