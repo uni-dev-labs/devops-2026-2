@@ -2,6 +2,7 @@ import express from "express";
 import cors from "cors";
 import { postgresRouter } from "./routes/postgres.routes.js";
 import { mongoRouter } from "./routes/mongo.routes.js";
+import { booksRouter } from "./routes/books.routes.js";
 import { productsRouter } from "./routes/products.routes.js";
 
 export function createApp() {
@@ -11,11 +12,12 @@ export function createApp() {
   app.use(express.json());
 
   app.get("/health", (_req, res) => {
-    res.json({ status: "ok", service: "express-ts-api" });
+    res.json({ status: "ok", service: "express-ts-api-diego", version: "1.1.0" });
   });
 
   app.use("/api/postgres", postgresRouter);
   app.use("/api/mongo", mongoRouter);
+  app.use("/api", booksRouter);
   app.use("/api/products", productsRouter);
 
   app.use((_req, res) => {
