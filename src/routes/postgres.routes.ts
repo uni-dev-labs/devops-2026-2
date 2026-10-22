@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from "express";
+import { validateUser } from "../services/user.service.js";
 import { pgPool } from "../db/postgres.js";
 import { parsePagination } from "../services/pagination.service.js";
 
@@ -57,12 +58,13 @@ postgresRouter.get("/users", async (req: Request, res: Response) => {
 
 postgresRouter.post("/users", async (req: Request, res: Response) => {
   try {
-    const { name, email } = req.body as { name?: string; email?: string };
+    const validation = validateUser(req.body ?? {});
 
-    if (!name || !email) {
-      res.status(400).json({ message: "name and email are required" });
+    if (!validation.ok) {
+      res.status(400).json({ message: validation.error });
       return;
     }
+    const { name, email } = validation.user;
 
     await pgPool.query(`
       CREATE TABLE IF NOT EXISTS users (
