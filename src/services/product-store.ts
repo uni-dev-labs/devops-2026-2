@@ -204,16 +204,19 @@ export class ProductStore {
     return product ? copyProduct(product) : null;
   }
 
-  list(query: ListProductsQuery = {}): Product[] {
-    if (!isObject(query)) {
+  list(query?: ListProductsQuery): Product[] {
+    const filters = query ?? {};
+    if (!isObject(filters)) {
       throw validationError("la consulta debe ser un objeto");
     }
 
-    const search = normalizeFilterText(query.search, "search");
-    const category = normalizeFilterText(query.category, "category");
-    const active = query.active === undefined ? undefined : validateActive(query.active);
-    const minPrice = query.minPrice === undefined ? undefined : validatePrice(query.minPrice, "minPrice");
-    const maxPrice = query.maxPrice === undefined ? undefined : validatePrice(query.maxPrice, "maxPrice");
+    const search = normalizeFilterText(filters.search, "search");
+    const category = normalizeFilterText(filters.category, "category");
+    const active = filters.active === undefined ? undefined : validateActive(filters.active);
+    const minPrice =
+      filters.minPrice === undefined ? undefined : validatePrice(filters.minPrice, "minPrice");
+    const maxPrice =
+      filters.maxPrice === undefined ? undefined : validatePrice(filters.maxPrice, "maxPrice");
 
     if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
       throw validationError("minPrice no puede ser mayor que maxPrice");
