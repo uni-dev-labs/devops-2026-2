@@ -1,4 +1,5 @@
 import { Router, type Request, type Response } from "express";
+import { validateUser } from "../services/user.service.js";
 import { getMongoDb } from "../db/mongo.js";
 import { parsePagination } from "../services/pagination.service.js";
 
@@ -53,12 +54,13 @@ mongoRouter.get("/users", async (req: Request, res: Response) => {
 
 mongoRouter.post("/users", async (req: Request, res: Response) => {
   try {
-    const { name, email } = req.body as { name?: string; email?: string };
+    const validation = validateUser(req.body ?? {});
 
-    if (!name || !email) {
-      res.status(400).json({ message: "name and email are required" });
+    if (!validation.ok) {
+      res.status(400).json({ message: validation.error });
       return;
     }
+    const { name, email } = validation.user;
 
     const db = getMongoDb();
     const doc = {
