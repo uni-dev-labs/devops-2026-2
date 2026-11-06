@@ -1,6 +1,5 @@
 import { Router, type Request, type Response } from "express";
 import { pgPool } from "../db/postgres.js";
-import { parsePagination } from "../services/pagination.service.js";
 
 export const postgresRouter = Router();
 
@@ -22,10 +21,8 @@ postgresRouter.get("/health", async (_req: Request, res: Response) => {
   }
 });
 
-postgresRouter.get("/users", async (req: Request, res: Response) => {
+postgresRouter.get("/users", async (_req: Request, res: Response) => {
   try {
-    const { limit, offset } = parsePagination(req.query);
-
     await pgPool.query(`
       CREATE TABLE IF NOT EXISTS users (
         id SERIAL PRIMARY KEY,
@@ -36,8 +33,7 @@ postgresRouter.get("/users", async (req: Request, res: Response) => {
     `);
 
     const result = await pgPool.query(
-      "SELECT id, name, email, created_at FROM users ORDER BY id ASC LIMIT $1 OFFSET $2",
-      [limit, offset]
+      "SELECT id, name, email, created_at FROM users ORDER BY id ASC"
     );
 
     res.json({
