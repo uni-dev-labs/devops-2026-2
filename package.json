@@ -11,6 +11,7 @@
     "db:benchmark": "tsx src/middleware/db-timing.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:productos": "vitest run --config vitest.productos.config.ts --reporter=json --outputFile=productos-results.json",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f api"
