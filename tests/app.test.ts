@@ -1,9 +1,12 @@
-import { describe, it, expect, vi, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import request from "supertest";
 
-const { pgQuery, mongoInsertOne } = vi.hoisted(() => ({
+const { pgQuery, mongoInsertOne, redisHGetAll, redisHSet, redisPing } = vi.hoisted(() => ({
   pgQuery: vi.fn(),
   mongoInsertOne: vi.fn(),
+  redisHGetAll: vi.fn(),
+  redisHSet: vi.fn(),
+  redisPing: vi.fn(),
 }));
 
 vi.mock("../src/db/postgres.js", () => ({
@@ -16,6 +19,14 @@ vi.mock("../src/db/mongo.js", () => ({
   }),
 }));
 
+vi.mock("../src/db/redis.js", () => ({
+  getRedisClient: () => ({
+    hGetAll: redisHGetAll,
+    hSet: redisHSet,
+    ping: redisPing,
+  }),
+}));
+
 import { createApp } from "../src/app.js";
 
 const app = createApp();
@@ -24,12 +35,26 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
+afterEach(() => {
+  vi.restoreAllMocks();
+});
+
 describe("API endpoints", () => {
   it("GET /health responde ok", async () => {
     const res = await request(app).get("/health");
 
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ status: "ok", service: "express-ts-api" });
+  });
+
+  it("registra en la terminal el tiempo de respuesta de la ruta", async () => {
+    const logSpy = vi.spyOn(console, "log").mockImplementation(() => {});
+
+    await request(app).get("/health?source=test");
+
+    expect(logSpy).toHaveBeenCalledWith(
+      expect.stringMatching(/^\[route-timing\] GET \/health \| 200 \| \d+\.\d{2} ms$/),
+    );
   });
 
   it("GET /api/postgres/users devuelve la lista de usuarios", async () => {
@@ -69,5 +94,51 @@ describe("API endpoints", () => {
       email: "luis@test.com",
     });
     expect(mongoInsertOne).toHaveBeenCalledOnce();
+  });
+
+  it("GET /api/redis/health responde con el estado de Redis", async () => {
+    redisPing.mockResolvedValueOnce("PONG");
+
+    const res = await request(app).get("/api/redis/health");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ status: "ok", database: "redis", ping: "PONG" });
+  });
+
+  it("GET /api/redis/users devuelve usuarios almacenados en Redis", async () => {
+    const user = { id: "user-1", name: "Eva", email: "eva@test.com", createdAt: "2026-10-08T00:00:00.000Z" };
+    redisHGetAll.mockResolvedValueOnce({ "user-1": JSON.stringify(user) });
+
+    const res = await request(app).get("/api/redis/users");
+
+    expect(res.status).toBe(200);
+    expect(res.body).toEqual({ database: "redis", count: 1, data: [user] });
+    expect(redisHGetAll).toHaveBeenCalledWith("users");
+  });
+
+  it("POST /api/redis/users sin email responde 400", async () => {
+    const res = await request(app).post("/api/redis/users").send({ name: "Eva" });
+
+    expect(res.status).toBe(400);
+    expect(res.body).toEqual({ message: "name and email are required" });
+    expect(redisHSet).not.toHaveBeenCalled();
+  });
+
+  it("POST /api/redis/users crea un usuario y responde 201", async () => {
+    redisHSet.mockResolvedValueOnce(1);
+
+    const res = await request(app)
+      .post("/api/redis/users")
+      .send({ name: "Eva", email: "eva@test.com" });
+
+    expect(res.status).toBe(201);
+    expect(res.body.database).toBe("redis");
+    expect(res.body.data).toMatchObject({
+      name: "Eva",
+      email: "eva@test.com",
+    });
+    expect(res.body.data.id).toEqual(expect.any(String));
+    expect(res.body.data.createdAt).toEqual(expect.any(String));
+    expect(redisHSet).toHaveBeenCalledWith("users", res.body.data.id, JSON.stringify(res.body.data));
   });
 });
