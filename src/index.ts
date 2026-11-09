@@ -2,10 +2,11 @@ import { createApp } from "./app.js";
 import { env } from "./config/env.js";
 import { connectPostgres, closePostgres } from "./db/postgres.js";
 import { connectMongo, closeMongo } from "./db/mongo.js";
+import { withTiming } from "./observability/timing.js";
 
 async function bootstrap() {
-  await connectPostgres();
-  await connectMongo();
+  await withTiming("db", "postgres.connect", connectPostgres);
+  await withTiming("db", "mongo.connect", connectMongo);
 
   const app = createApp();
   const server = app.listen(env.port, () => {

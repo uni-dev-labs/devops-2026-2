@@ -1,12 +1,29 @@
 import { Router, type Request, type Response } from "express";
 import { pgPool } from "../db/postgres.js";
 import { parsePagination } from "../services/pagination.service.js";
+import { withTiming } from "../observability/timing.js";
 
 export const postgresRouter = Router();
 
+// Medido por separado para que el DDL no se confunda con el tiempo de la consulta real.
+async function ensureUsersTable(): Promise<void> {
+  await withTiming("db", "postgres.ensureUsersTable", () =>
+    pgPool.query(`
+      CREATE TABLE IF NOT EXISTS users (
+        id SERIAL PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT UNIQUE NOT NULL,
+        created_at TIMESTAMPTZ DEFAULT NOW()
+      )
+    `),
+  );
+}
+
 postgresRouter.get("/health", async (_req: Request, res: Response) => {
   try {
-    const result = await pgPool.query("SELECT NOW() AS now");
+    const result = await withTiming("db", "postgres.health", () =>
+      pgPool.query("SELECT NOW() AS now"),
+    );
     res.json({
       status: "ok",
       database: "postgresql",
@@ -24,20 +41,17 @@ postgresRouter.get("/health", async (_req: Request, res: Response) => {
 
 postgresRouter.get("/users", async (req: Request, res: Response) => {
   try {
-    const { limit, offset } = parsePagination(req.query);
+    const { limit, offset } = withTiming("service", "parsePagination", () =>
+      parsePagination(req.query),
+    );
 
-    await pgPool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
+    await ensureUsersTable();
 
-    const result = await pgPool.query(
-      "SELECT id, name, email, created_at FROM users ORDER BY id ASC LIMIT $1 OFFSET $2",
-      [limit, offset]
+    const result = await withTiming("db", "postgres.users.select", () =>
+      pgPool.query(
+        "SELECT id, name, email, created_at FROM users ORDER BY id ASC LIMIT $1 OFFSET $2",
+        [limit, offset],
+      ),
     );
 
     res.json({
@@ -64,20 +78,15 @@ postgresRouter.post("/users", async (req: Request, res: Response) => {
       return;
     }
 
-    await pgPool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
+    await ensureUsersTable();
 
-    const result = await pgPool.query(
-      `INSERT INTO users (name, email)
-       VALUES ($1, $2)
-       RETURNING id, name, email, created_at`,
-      [name, email]
+    const result = await withTiming("db", "postgres.users.insert", () =>
+      pgPool.query(
+        `INSERT INTO users (name, email)
+         VALUES ($1, $2)
+         RETURNING id, name, email, created_at`,
+        [name, email],
+      ),
     );
 
     res.status(201).json({

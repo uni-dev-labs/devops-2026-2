@@ -13,4 +13,11 @@ export const env = {
     uri: process.env.MONGO_URI || "mongodb://localhost:27017",
     dbName: process.env.MONGO_DB || "app_db",
   },
+  tracing: {
+    // Trazabilidad de tiempos. Activa por defecto, salvo en tests (NODE_ENV=test) para no
+    // ensuciar la salida. TRACE_TIMING=true|false fuerza el valor.
+    enabled: process.env.TRACE_TIMING
+      ? process.env.TRACE_TIMING === "true"
+      : process.env.NODE_ENV !== "test",
+  },
 };
