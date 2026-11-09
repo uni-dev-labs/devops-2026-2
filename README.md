@@ -53,6 +53,13 @@ npm run build
 npm start
 ```
 
+## Trazabilidad de tiempos
+
+Cada petición recibe un `traceId` (header `X-Trace-Id`) y se mide el tiempo de la ruta, de las
+funciones de servicio y de cada consulta a Postgres/Mongo. Se activa con `TRACE_TIMING=true` en `.env`
+(por defecto está activa salvo en tests). Detalle, formato de salida y decisiones de diseño en
+[`src/observability/README.md`](src/observability/README.md).
+
 ## Endpoints
 
 | Método | Ruta | Descripción |

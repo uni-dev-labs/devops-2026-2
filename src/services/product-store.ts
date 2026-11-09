@@ -3,7 +3,6 @@
  * El comportamiento lo definen los tests de tests/practica-productos.
  * Implementen los métodos. No cambien las firmas ni los códigos de ProductError.
  */
-
 import { randomUUID } from "node:crypto";
 
 export type Product = {
