@@ -159,3 +159,20 @@ Body esperado en POST `/users`:
 - **mongo** — MongoDB 7, expuesto en el puerto `27017`
 
 Dentro de la red de Docker, la API se conecta a las bases usando el nombre del servicio (`postgres` y `mongo`), no `localhost`.
+## Medición de rendimiento de ProductStore
+
+Ejecuta la medición con:
+
+```bash
+npm run benchmark:productos
+```
+
+El script mide `create`, `getById`, `getBySku`, `list`, `update`, `remove` y `adjustStock` usando lotes, un dataset de 500 productos y dos lotes de calentamiento. Reporta mediana, promedio, p95 y operaciones por segundo. Esta medición cubre `ProductStore` en memoria; no mide latencia HTTP ni PostgreSQL/MongoDB.
+
+Para guardar también un reporte JSON en PowerShell:
+
+```powershell
+$env:BENCH_OUTPUT = "product-store-benchmark.json"
+npm run benchmark:productos
+Remove-Item Env:BENCH_OUTPUT
+```\n

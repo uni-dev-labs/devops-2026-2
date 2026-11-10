@@ -13,7 +13,8 @@
     "test:productos": "vitest run --config vitest.productos.config.ts --reporter=default --reporter=json --outputFile=productos-results.json",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f api"
+    "docker:logs": "docker compose logs -f api",
+    "benchmark:productos": "tsx scripts/benchmark-product-store.ts"
   },
   "keywords": [
     "express",
