@@ -2,6 +2,7 @@ node_modules/
 dist/
 .env
 productos-results.json
+timing-results.json
 *.log
 .DS_Store
 material-de-clase/
