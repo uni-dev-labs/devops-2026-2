@@ -8,6 +8,7 @@ export const env = {
     user: process.env.POSTGRES_USER || "postgres",
     password: process.env.POSTGRES_PASSWORD || "postgres",
     database: process.env.POSTGRES_DB || "app_db",
+    ssl: process.env.POSTGRES_SSL === "true",
   },
   mongo: {
     uri: process.env.MONGO_URI || "mongodb://localhost:27017",
