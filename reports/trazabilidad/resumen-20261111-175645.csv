@@ -1,0 +1,7 @@
+﻿"Service","Endpoint","Requests","Success","Errors","MinMs","AvgMs","P95Ms","MaxMs","RequestsPerSecond"
+"API","/health","100","100","0","1,772","2,21","2,89","5,424","368,2"
+"PostgreSQL","/api/postgres/health","100","100","0","2,282","2,829","3,442","4,282","344,14"
+"PostgreSQL","/api/postgres/users?limit=20&offset=0","100","100","0","2,677","3,314","4,473","7,58","294,88"
+"MongoDB","/api/mongo/health","100","100","0","2,403","3,329","4,046","18,975","293,51"
+"MongoDB","/api/mongo/users?limit=20&offset=0","100","100","0","2,725","4,119","5,811","6,426","237,52"
+"MongoDB","/api/products","100","100","0","2,644","3,818","5,559","8,683","256,18"
