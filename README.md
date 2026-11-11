@@ -159,3 +159,21 @@ Body esperado en POST `/users`:
 - **mongo** — MongoDB 7, expuesto en el puerto `27017`
 
 Dentro de la red de Docker, la API se conecta a las bases usando el nombre del servicio (`postgres` y `mongo`), no `localhost`.
+
+## Rendimiento de los servicios (Taller de Trazabilidad)
+
+Los benchmarks de [`bench/`](bench/) y el script [`scripts/medir-rendimiento.ts`](scripts/medir-rendimiento.ts) miden el rendimiento de cada servicio en `src/services`:
+
+- `bench/pagination.service.bench.ts` — `parsePagination` con query vacío, válido, con `limit` por encima del máximo y con valores inválidos.
+- `bench/product-store.bench.ts` — operaciones de escritura (`create`, `update`, `adjustStock`, `remove`) y de lectura (`getById`, `getBySku`, `list` con y sin filtros) sobre un almacén con 1000 productos.
+- `scripts/medir-rendimiento.ts` — medición directa con `performance.now()` y `console.time` que genera una tabla comparativa con tiempos `Total (ms)`, `Promedio (µs)`, `Min (µs)`, `P95 (µs)`, `Max (µs)` y `Ops/seg`.
+
+```bash
+# Ejecutar medición con tabla resumen (performance.now + console.time)
+npm run perf
+
+# Ejecutar suite de benchmarks con Vitest
+npm run bench
+```
+
+Ver el reporte detallado de resultados en [`RENDIMIENTO.md`](RENDIMIENTO.md).
