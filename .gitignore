@@ -5,3 +5,6 @@ productos-results.json
 *.log
 .DS_Store
 material-de-clase/
+timing-results.json
+benchmark-results.json
+*.html

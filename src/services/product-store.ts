@@ -4,8 +4,6 @@
  * Implementen los métodos. No cambien las firmas ni los códigos de ProductError.
  */
 
-import { randomUUID } from "node:crypto";
-
 export type Product = {
   id: string;
   name: string;
@@ -43,16 +41,7 @@ export type ListProductsQuery = {
   maxPrice?: number;
 };
 
-export type ProductErrorCode =
-  | "VALIDATION"
-  | "NOT_FOUND"
-  | "DUPLICATE_SKU"
-  | "INSUFFICIENT_STOCK";
-
-const NAME_MAX = 80;
-const SKU_MIN = 2;
-const SKU_MAX = 32;
-const SKU_PATTERN = /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
+export type ProductErrorCode = "VALIDATION" | "NOT_FOUND" | "DUPLICATE_SKU" | "INSUFFICIENT_STOCK";
 
 export class ProductError extends Error {
   readonly code: ProductErrorCode;
@@ -65,254 +54,324 @@ export class ProductError extends Error {
   }
 }
 
-function fail(code: ProductErrorCode, message: string): never {
-  throw new ProductError(code, message);
-}
+import { randomUUID } from "node:crypto";
 
-function normalizeName(name: unknown): string {
-  if (typeof name !== "string") {
-    fail("VALIDATION", "El nombre debe ser texto");
-  }
-
-  const trimmed = name.trim();
-  if (trimmed.length < 1 || trimmed.length > NAME_MAX) {
-    fail("VALIDATION", "El nombre debe tener entre 1 y 80 caracteres");
-  }
-
-  return trimmed;
-}
-
-function normalizeSku(sku: unknown): string {
-  if (typeof sku !== "string") {
-    fail("VALIDATION", "El sku debe ser texto");
-  }
-
-  const normalized = sku.trim().toUpperCase();
-  if (
-    normalized.length < SKU_MIN ||
-    normalized.length > SKU_MAX ||
-    !SKU_PATTERN.test(normalized)
-  ) {
-    fail(
-      "VALIDATION",
-      "El sku debe tener de 2 a 32 caracteres: letras, dígitos y guiones simples, sin guion al inicio ni al final",
-    );
-  }
-
-  return normalized;
-}
-
-function normalizePrice(price: unknown): number {
-  if (typeof price !== "number" || !Number.isFinite(price) || price < 0) {
-    fail("VALIDATION", "El precio debe ser un número finito mayor o igual a 0");
-  }
-
-  return price;
-}
-
-function normalizeStock(stock: unknown): number {
-  if (typeof stock !== "number" || !Number.isInteger(stock) || stock < 0) {
-    fail("VALIDATION", "El stock debe ser un entero mayor o igual a 0");
-  }
-
-  return stock;
-}
-
-function normalizeCategory(category: unknown): string | null {
-  if (category === undefined || category === null) return null;
-  if (typeof category !== "string") {
-    fail("VALIDATION", "La categoría debe ser texto o null");
-  }
-
-  const trimmed = category.trim();
-  return trimmed.length === 0 ? null : trimmed;
-}
-
-function normalizeActive(active: unknown): boolean {
-  if (typeof active !== "boolean") {
-    fail("VALIDATION", "El estado activo debe ser verdadero o falso");
-  }
-
-  return active;
-}
-
-function normalizeBound(value: unknown, label: string): number | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) {
-    fail("VALIDATION", `${label} debe ser un número finito mayor o igual a 0`);
-  }
-
-  return value;
-}
-
-function normalizeFilterText(value: unknown): string | undefined {
-  if (value === undefined) return undefined;
-  if (typeof value !== "string") {
-    fail("VALIDATION", "El filtro de texto debe ser texto");
-  }
-
-  const trimmed = value.trim().toLocaleLowerCase("es");
-  return trimmed.length === 0 ? undefined : trimmed;
-}
-
-function cloneProduct(product: Product): Product {
-  return {
-    ...product,
-    createdAt: new Date(product.createdAt.getTime()),
-    updatedAt: new Date(product.updatedAt.getTime()),
-  };
-}
+const SKU_REGEX = /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
 
 export class ProductStore {
   private readonly products = new Map<string, Product>();
-  private readonly skuIndex = new Map<string, string>();
+
+  private cloneProduct(product: Product): Product {
+    return {
+      ...product,
+      createdAt: new Date(product.createdAt.getTime()),
+      updatedAt: new Date(product.updatedAt.getTime()),
+    };
+  }
 
   create(input: CreateProductInput): Product {
-    const name = normalizeName(input.name);
-    const sku = normalizeSku(input.sku);
-    const price = normalizePrice(input.price);
-    const stock = input.stock === undefined ? 0 : normalizeStock(input.stock);
-    const category = normalizeCategory(input.category);
+    if (typeof input.name !== "string") {
+      throw new ProductError("VALIDATION", "El nombre es obligatorio y debe ser un texto.");
+    }
+    const trimmedName = input.name.trim();
+    if (trimmedName.length < 1 || trimmedName.length > 80) {
+      throw new ProductError("VALIDATION", "El nombre debe tener entre 1 y 80 caracteres.");
+    }
 
-    if (this.skuIndex.has(sku)) {
-      fail("DUPLICATE_SKU", "Ya existe un producto con ese sku");
+    if (typeof input.sku !== "string") {
+      throw new ProductError("VALIDATION", "El SKU es obligatorio y debe ser un texto.");
+    }
+    const normalizedSku = input.sku.trim().toUpperCase();
+    if (
+      normalizedSku.length < 2 ||
+      normalizedSku.length > 32 ||
+      !SKU_REGEX.test(normalizedSku)
+    ) {
+      throw new ProductError("VALIDATION", "El formato del SKU no es válido.");
+    }
+
+    for (const p of this.products.values()) {
+      if (p.sku.toUpperCase() === normalizedSku) {
+        throw new ProductError("DUPLICATE_SKU", `El SKU "${normalizedSku}" ya pertenece a otro producto.`);
+      }
+    }
+
+    if (
+      typeof input.price !== "number" ||
+      Number.isNaN(input.price) ||
+      !Number.isFinite(input.price) ||
+      input.price < 0
+    ) {
+      throw new ProductError("VALIDATION", "El precio debe ser un número finito mayor o igual a 0.");
+    }
+
+    let stock = 0;
+    if (input.stock !== undefined) {
+      if (
+        typeof input.stock !== "number" ||
+        Number.isNaN(input.stock) ||
+        !Number.isInteger(input.stock) ||
+        input.stock < 0
+      ) {
+        throw new ProductError("VALIDATION", "El stock debe ser un número entero mayor o igual a 0.");
+      }
+      stock = input.stock;
+    }
+
+    let category: string | null = null;
+    if (input.category !== undefined && input.category !== null) {
+      if (typeof input.category !== "string") {
+        throw new ProductError("VALIDATION", "La categoría debe ser un texto o null.");
+      }
+      category = input.category.trim() || null;
     }
 
     const now = new Date();
     const product: Product = {
       id: randomUUID(),
-      name,
-      sku,
-      price,
+      name: trimmedName,
+      sku: normalizedSku,
+      price: input.price,
       stock,
       category,
       active: true,
-      createdAt: new Date(now.getTime()),
+      createdAt: now,
       updatedAt: new Date(now.getTime()),
     };
 
-    this.products.set(product.id, product);
-    this.skuIndex.set(sku, product.id);
-    return cloneProduct(product);
+    this.products.set(product.id, this.cloneProduct(product));
+    return this.cloneProduct(product);
   }
 
   getById(id: string): Product | null {
+    if (typeof id !== "string" || !id.trim()) {
+      return null;
+    }
     const product = this.products.get(id);
-    return product ? cloneProduct(product) : null;
+    return product ? this.cloneProduct(product) : null;
   }
 
   getBySku(sku: string): Product | null {
-    if (typeof sku !== "string") return null;
-    const id = this.skuIndex.get(sku.trim().toUpperCase());
-    if (!id) return null;
-    return this.getById(id);
+    if (typeof sku !== "string" || !sku.trim()) {
+      return null;
+    }
+    const normalized = sku.trim().toUpperCase();
+    for (const p of this.products.values()) {
+      if (p.sku.toUpperCase() === normalized) {
+        return this.cloneProduct(p);
+      }
+    }
+    return null;
   }
 
   list(query?: ListProductsQuery): Product[] {
-    const filters = query ?? {};
-    const minPrice = normalizeBound(filters.minPrice, "minPrice");
-    const maxPrice = normalizeBound(filters.maxPrice, "maxPrice");
-
-    if (minPrice !== undefined && maxPrice !== undefined && minPrice > maxPrice) {
-      fail("VALIDATION", "minPrice no puede ser mayor que maxPrice");
+    if (query?.minPrice !== undefined) {
+      if (
+        typeof query.minPrice !== "number" ||
+        Number.isNaN(query.minPrice) ||
+        !Number.isFinite(query.minPrice) ||
+        query.minPrice < 0
+      ) {
+        throw new ProductError("VALIDATION", "El minPrice debe ser un número finito mayor o igual a 0.");
+      }
     }
 
-    const search = normalizeFilterText(filters.search);
-    const category = normalizeFilterText(filters.category);
+    if (query?.maxPrice !== undefined) {
+      if (
+        typeof query.maxPrice !== "number" ||
+        Number.isNaN(query.maxPrice) ||
+        !Number.isFinite(query.maxPrice) ||
+        query.maxPrice < 0
+      ) {
+        throw new ProductError("VALIDATION", "El maxPrice debe ser un número finito mayor o igual a 0.");
+      }
+    }
 
-    return [...this.products.values()]
-      .filter((product) => {
-        if (search && !product.name.toLocaleLowerCase("es").includes(search)) return false;
-        if (category && product.category?.toLocaleLowerCase("es") !== category) return false;
-        if (filters.active !== undefined && product.active !== filters.active) return false;
-        if (minPrice !== undefined && product.price < minPrice) return false;
-        if (maxPrice !== undefined && product.price > maxPrice) return false;
-        return true;
-      })
-      .sort((left, right) => {
-        const byName = left.name.localeCompare(right.name, "es", { sensitivity: "base" });
-        if (byName !== 0) return byName;
-        return left.sku.localeCompare(right.sku);
-      })
-      .map(cloneProduct);
+    if (
+      query?.minPrice !== undefined &&
+      query?.maxPrice !== undefined &&
+      query.minPrice > query.maxPrice
+    ) {
+      throw new ProductError("VALIDATION", "minPrice no puede ser mayor que maxPrice.");
+    }
+
+    let results = Array.from(this.products.values());
+
+    if (query) {
+      if (query.search !== undefined) {
+        const s = query.search.trim().toLowerCase();
+        if (s.length > 0) {
+          results = results.filter((p) => p.name.toLowerCase().includes(s));
+        }
+      }
+
+      if (query.category !== undefined) {
+        const c = query.category.trim().toLowerCase();
+        if (c.length > 0) {
+          results = results.filter((p) => p.category !== null && p.category.toLowerCase() === c);
+        }
+      }
+
+      if (query.active !== undefined) {
+        results = results.filter((p) => p.active === query.active);
+      }
+
+      if (query.minPrice !== undefined) {
+        results = results.filter((p) => p.price >= query.minPrice!);
+      }
+
+      if (query.maxPrice !== undefined) {
+        results = results.filter((p) => p.price <= query.maxPrice!);
+      }
+    }
+
+    results.sort((a, b) => {
+      const cmp = a.name.localeCompare(b.name, "es", { sensitivity: "base" });
+      if (cmp !== 0) {
+        return cmp;
+      }
+      return a.sku.localeCompare(b.sku);
+    });
+
+    return results.map((p) => this.cloneProduct(p));
   }
 
   update(id: string, patch: UpdateProductInput): Product {
-    const current = this.products.get(id);
-    if (!current) fail("NOT_FOUND", "Producto no encontrado");
-
-    const hasName = patch.name !== undefined;
-    const hasSku = patch.sku !== undefined;
-    const hasPrice = patch.price !== undefined;
-    const hasStock = patch.stock !== undefined;
-    const hasCategory = patch.category !== undefined;
-    const hasActive = patch.active !== undefined;
-
-    if (!hasName && !hasSku && !hasPrice && !hasStock && !hasCategory && !hasActive) {
-      return cloneProduct(current);
+    const existing = this.products.get(id);
+    if (!existing) {
+      throw new ProductError("NOT_FOUND", `Producto con id ${id} no encontrado.`);
     }
 
-    const name = hasName ? normalizeName(patch.name) : current.name;
-    const sku = hasSku ? normalizeSku(patch.sku) : current.sku;
-    const price = hasPrice ? normalizePrice(patch.price) : current.price;
-    const stock = hasStock ? normalizeStock(patch.stock) : current.stock;
-    const category = hasCategory ? normalizeCategory(patch.category) : current.category;
-    const active = hasActive ? normalizeActive(patch.active) : current.active;
+    const hasFields =
+      patch.name !== undefined ||
+      patch.sku !== undefined ||
+      patch.price !== undefined ||
+      patch.stock !== undefined ||
+      patch.category !== undefined ||
+      patch.active !== undefined;
 
-    if (sku !== current.sku && this.skuIndex.has(sku)) {
-      fail("DUPLICATE_SKU", "Ya existe un producto con ese sku");
+    if (!hasFields) {
+      return this.cloneProduct(existing);
     }
 
-    const updated: Product = {
-      ...current,
-      name,
-      sku,
-      price,
-      stock,
-      category,
-      active,
-      createdAt: new Date(current.createdAt.getTime()),
-      updatedAt: new Date(),
-    };
-
-    if (sku !== current.sku) {
-      this.skuIndex.delete(current.sku);
-      this.skuIndex.set(sku, current.id);
+    let updatedName = existing.name;
+    if (patch.name !== undefined) {
+      if (typeof patch.name !== "string") {
+        throw new ProductError("VALIDATION", "El nombre debe ser un texto.");
+      }
+      const trimmed = patch.name.trim();
+      if (trimmed.length < 1 || trimmed.length > 80) {
+        throw new ProductError("VALIDATION", "El nombre debe tener entre 1 y 80 caracteres.");
+      }
+      updatedName = trimmed;
     }
 
-    this.products.set(current.id, updated);
-    return cloneProduct(updated);
+    let updatedSku = existing.sku;
+    if (patch.sku !== undefined) {
+      if (typeof patch.sku !== "string") {
+        throw new ProductError("VALIDATION", "El SKU debe ser un texto.");
+      }
+      const normalized = patch.sku.trim().toUpperCase();
+      if (
+        normalized.length < 2 ||
+        normalized.length > 32 ||
+        !SKU_REGEX.test(normalized)
+      ) {
+        throw new ProductError("VALIDATION", "El SKU no tiene un formato válido.");
+      }
+      for (const p of this.products.values()) {
+        if (p.id !== id && p.sku.toUpperCase() === normalized) {
+          throw new ProductError("DUPLICATE_SKU", `El SKU "${normalized}" ya pertenece a otro producto.`);
+        }
+      }
+      updatedSku = normalized;
+    }
+
+    let updatedPrice = existing.price;
+    if (patch.price !== undefined) {
+      if (
+        typeof patch.price !== "number" ||
+        Number.isNaN(patch.price) ||
+        !Number.isFinite(patch.price) ||
+        patch.price < 0
+      ) {
+        throw new ProductError("VALIDATION", "El precio debe ser un número finito mayor o igual a 0.");
+      }
+      updatedPrice = patch.price;
+    }
+
+    let updatedStock = existing.stock;
+    if (patch.stock !== undefined) {
+      if (
+        typeof patch.stock !== "number" ||
+        Number.isNaN(patch.stock) ||
+        !Number.isInteger(patch.stock) ||
+        patch.stock < 0
+      ) {
+        throw new ProductError("VALIDATION", "El stock debe ser un entero mayor o igual a 0.");
+      }
+      updatedStock = patch.stock;
+    }
+
+    let updatedCategory = existing.category;
+    if (patch.category !== undefined) {
+      if (patch.category === null) {
+        updatedCategory = null;
+      } else if (typeof patch.category === "string") {
+        updatedCategory = patch.category.trim() || null;
+      } else {
+        throw new ProductError("VALIDATION", "La categoría debe ser un texto o null.");
+      }
+    }
+
+    let updatedActive = existing.active;
+    if (patch.active !== undefined) {
+      if (typeof patch.active !== "boolean") {
+        throw new ProductError("VALIDATION", "El campo active debe ser booleano.");
+      }
+      updatedActive = patch.active;
+    }
+
+    existing.name = updatedName;
+    existing.sku = updatedSku;
+    existing.price = updatedPrice;
+    existing.stock = updatedStock;
+    existing.category = updatedCategory;
+    existing.active = updatedActive;
+    existing.updatedAt = new Date();
+
+    return this.cloneProduct(existing);
   }
 
   remove(id: string): boolean {
-    const current = this.products.get(id);
-    if (!current) return false;
-    this.products.delete(id);
-    this.skuIndex.delete(current.sku);
-    return true;
+    if (typeof id !== "string" || !id.trim()) {
+      return false;
+    }
+    return this.products.delete(id);
   }
 
   adjustStock(id: string, delta: number): Product {
-    if (typeof delta !== "number" || !Number.isInteger(delta) || delta === 0) {
-      fail("VALIDATION", "El ajuste de stock debe ser un entero distinto de cero");
+    const existing = this.products.get(id);
+    if (!existing) {
+      throw new ProductError("NOT_FOUND", `Producto con id ${id} no encontrado.`);
     }
 
-    const current = this.products.get(id);
-    if (!current) fail("NOT_FOUND", "Producto no encontrado");
-
-    const stock = current.stock + delta;
-    if (stock < 0) {
-      fail("INSUFFICIENT_STOCK", "No hay stock suficiente para ese ajuste");
+    if (
+      typeof delta !== "number" ||
+      Number.isNaN(delta) ||
+      !Number.isInteger(delta) ||
+      delta === 0
+    ) {
+      throw new ProductError("VALIDATION", "El delta debe ser un entero distinto de cero.");
     }
 
-    const updated: Product = {
-      ...current,
-      stock,
-      createdAt: new Date(current.createdAt.getTime()),
-      updatedAt: new Date(),
-    };
+    if (existing.stock + delta < 0) {
+      throw new ProductError("INSUFFICIENT_STOCK", "Stock insuficiente para realizar el ajuste.");
+    }
 
-    this.products.set(current.id, updated);
-    return cloneProduct(updated);
+    existing.stock += delta;
+    existing.updatedAt = new Date();
+
+    return this.cloneProduct(existing);
   }
 }
