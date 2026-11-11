@@ -56,6 +56,8 @@ export class ProductError extends Error {
   }
 }
 
+// Un solo collator reutilizado: localeCompare con opciones crea uno nuevo en cada comparación.
+const compararNombre = new Intl.Collator("es", { sensitivity: "base" }).compare;
 const SKU_PATTERN = /^[A-Z0-9]+(?:-[A-Z0-9]+)*$/;
 
 function fail(code: ProductErrorCode, message: string): never {
@@ -157,7 +159,7 @@ export class ProductStore {
       .filter((product) => maxPrice === undefined || product.price <= maxPrice)
       .sort(
         (a, b) =>
-          a.name.localeCompare(b.name, "es", { sensitivity: "base" }) ||
+          compararNombre(a.name, b.name) ||
           (a.sku < b.sku ? -1 : a.sku > b.sku ? 1 : 0),
       )
       .map(copy);
