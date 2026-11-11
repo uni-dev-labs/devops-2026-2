@@ -5,3 +5,5 @@ productos-results.json
 *.log
 .DS_Store
 material-de-clase/
+perf/resultados/
+unit-results.json

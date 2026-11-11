@@ -11,6 +11,10 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:productos": "vitest run --config vitest.productos.config.ts --reporter=default --reporter=json --outputFile=productos-results.json",
+    "perf:servicios": "node --expose-gc --import tsx perf/servicios.ts",
+    "perf:perfil": "PERF_PERFIL=1 node --cpu-prof --cpu-prof-dir=perf/resultados/perfiles --import tsx perf/servicios.ts && tsx perf/perfil-cpu.ts",
+    "perf:endpoints": "tsx perf/endpoints.ts",
+    "perf:docker-stats": "tsx perf/docker-stats.ts",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
     "docker:logs": "docker compose logs -f api"

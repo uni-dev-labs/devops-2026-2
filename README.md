@@ -159,3 +159,33 @@ Body esperado en POST `/users`:
 - **mongo** — MongoDB 7, expuesto en el puerto `27017`
 
 Dentro de la red de Docker, la API se conecta a las bases usando el nombre del servicio (`postgres` y `mongo`), no `localhost`.
+## Trazabilidad y rendimiento de los servicios
+
+Cada push a una rama `trazabilidad-*` corre el workflow **Trazabilidad y rendimiento** (`.github/workflows/rendimiento.yml`), sin pull request. Mide el rendimiento de cada servicio y deja los resultados en el resumen de la corrida (pestaña *Actions*) y como artefactos descargables.
+
+| Job | Qué hace |
+| --- | --- |
+| **CI · tipos, tests y build** | Verifica tipos (API y scripts de medición), corre los tests unitarios y los 32 de la práctica de productos, y compila. Si algo falla, no se mide. |
+| **Rendimiento · servicios de código** | Mide cada operación de `ProductStore` y de `pagination.service` (promedio, p50, p95, p99, máx y ops/s), cómo escala `list()` con 100, 1 000 y 5 000 productos, y la memoria por producto. Genera un perfil de CPU (`node --cpu-prof`) y muestra las funciones que más CPU consumen. |
+| **CD · despliegue con Docker Compose y carga por servicio** | Construye la imagen de producción y despliega el stack completo (`api`, `postgres`, `mongo`) con `docker compose`. Luego lanza 500 peticiones (10 en paralelo) a cada endpoint y agrupa los resultados por servicio, registra CPU y memoria de cada contenedor con `docker stats` y apaga el stack. Si un endpoint responde con un estado inesperado, el job falla. |
+
+Cada reporte lleva el commit, la rama, la versión de Node y la CPU del runner, así cada número se puede rastrear hasta el código que lo produjo.
+
+### Correr las mediciones en local
+
+```bash
+npm run perf:servicios     # servicios de código; PERF_N=20000 para más llamadas
+npm run perf:perfil        # perfil de CPU en perf/resultados/perfiles (se abre en Chrome DevTools)
+
+docker compose up --build -d
+npm run perf:endpoints     # carga por endpoint; API_URL, PERF_REQUESTS y PERF_CONCURRENCIA son opcionales
+docker compose down
+```
+
+Los resultados quedan en `perf/resultados/` (JSON y Markdown); esa carpeta no se versiona.
+
+### Qué revelan las mediciones
+
+- `ProductStore.list()` es la operación más costosa: ordena todo el almacén en cada llamada con `localeCompare(…, "es", …)`, y el perfil de CPU ubica la mayor parte del tiempo en `compareProducts`. Las lecturas por id y por sku van directo a un `Map` y quedan en microsegundos.
+- `GET /api/products` devuelve la colección completa, sin paginar, así que su latencia crece con la cantidad de productos. Las listas de usuarios sí paginan.
+- `GET` y `POST /api/postgres/users` ejecutan `CREATE TABLE IF NOT EXISTS` en cada petición, lo que suma una consulta extra a la base por request.

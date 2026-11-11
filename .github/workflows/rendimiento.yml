@@ -1,0 +1,174 @@
+name: Trazabilidad y rendimiento
+
+# Mide el rendimiento de cada servicio en cada push a una rama de trazabilidad (sin pull request).
+#   CI: verifica tipos, tests y build antes de medir.
+#   Servicios de código: cada operación de ProductStore y pagination.service + perfil de CPU.
+#   CD: despliega el stack (api + postgres + mongo) con Docker Compose, lo somete a carga
+#       endpoint por endpoint y registra CPU/memoria de cada contenedor.
+# Los resultados quedan en el resumen de la corrida y como artefactos descargables.
+
+on:
+  push:
+    branches:
+      - "trazabilidad-**"
+  workflow_dispatch:
+
+concurrency:
+  group: rendimiento-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI · tipos, tests y build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v5
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Verificar tipos de la API
+        run: npm run typecheck
+
+      - name: Verificar tipos de los scripts de medición
+        run: npx tsc -p tsconfig.perf.json
+
+      - name: Tests unitarios
+        run: npm test -- --reporter=default --reporter=json --outputFile=unit-results.json
+
+      - name: Tests de la práctica de productos
+        run: npm run test:productos
+
+      - name: Compilar
+        run: npm run build
+
+      - name: Resumen de CI
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            const leer = (ruta) => { try { return JSON.parse(fs.readFileSync(ruta, "utf8")); } catch { return null; } };
+            const fila = (nombre, r) => r
+              ? `| ${nombre} | ${r.numPassedTests} / ${r.numTotalTests} | ${r.numFailedTests === 0 ? "ok" : "falla"} |`
+              : `| ${nombre} | sin resultados | falla |`;
+            console.log([
+              "## CI antes de medir",
+              "",
+              "| Verificación | Tests que pasan | Estado |",
+              "| --- | --- | --- |",
+              fila("Tests unitarios (`npm test`)", leer("unit-results.json")),
+              fila("Práctica de productos (`npm run test:productos`)", leer("productos-results.json")),
+              `| Tipos y build | — | ${fs.existsSync("dist/index.js") ? "ok" : "falla"} |`,
+              "",
+            ].join("\n"));
+          ' >> "$GITHUB_STEP_SUMMARY"
+
+  servicios:
+    name: Rendimiento · servicios de código
+    needs: ci
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v5
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Medir cada operación de cada servicio
+        run: npm run perf:servicios
+
+      - name: Perfil de CPU (dónde se va el tiempo)
+        run: npm run perf:perfil
+
+      - name: Guardar resultados
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rendimiento-servicios-de-codigo
+          path: perf/resultados/
+          if-no-files-found: warn
+          retention-days: 30
+
+  despliegue:
+    name: CD · despliegue con Docker Compose y carga por servicio
+    needs: ci
+    runs-on: ubuntu-latest
+    env:
+      API_URL: http://localhost:3000
+      PERF_REQUESTS: "500"
+      PERF_CONCURRENCIA: "10"
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v5
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Desplegar el stack (api + postgres + mongo)
+        run: |
+          cp .env.example .env
+          docker compose up --build --detach --wait --wait-timeout 180
+          docker compose ps
+
+      - name: Consumo en reposo
+        run: |
+          mkdir -p perf/resultados
+          for i in 1 2 3; do
+            docker stats --no-stream --format '{{json .}}' >> perf/resultados/docker-stats-reposo.ndjson
+          done
+
+      - name: Prueba de carga por endpoint (muestreando docker stats)
+        run: |
+          ( while true; do
+              docker stats --no-stream --format '{{json .}}' >> perf/resultados/docker-stats-carga.ndjson
+            done ) &
+          MUESTREO=$!
+          npm run perf:endpoints || FALLO=$?
+          kill "$MUESTREO" 2>/dev/null || true
+          exit "${FALLO:-0}"
+
+      - name: CPU y memoria por contenedor
+        if: ${{ !cancelled() && hashFiles('perf/resultados/docker-stats-carga.ndjson') != '' }}
+        run: npm run perf:docker-stats
+
+      - name: Logs del stack
+        if: failure()
+        run: docker compose logs --no-color --tail=200
+
+      - name: Guardar resultados
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: rendimiento-stack-desplegado
+          path: perf/resultados/
+          if-no-files-found: warn
+          retention-days: 30
+
+      - name: Apagar el stack
+        if: always()
+        run: docker compose down --volumes
