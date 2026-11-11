@@ -5,18 +5,18 @@ import { parsePagination } from "../src/services/pagination.service.js";
 import { ProductStore } from "../src/services/product-store.js";
 
 const ITERACIONES = Number(process.env.ITERACIONES ?? 10_000);
-const ITERACIONES_LIST = Number(process.env.ITERACIONES_LIST ?? 1_000);
+const ITERACIONES_LIST = Number(process.env.ITERACIONES_LIST ?? 500);
 
 type MetricaServicio = {
-  Servicio: string;
-  Operacion: string;
-  Iteraciones: number;
-  "Total (ms)": number;
-  "Promedio (µs)": number;
-  "Min (µs)": number;
-  "P95 (µs)": number;
-  "Max (µs)": number;
-  "Ops/seg": number;
+  servicio: string;
+  operacion: string;
+  iter: number;
+  totalMs: string;
+  promUs: string;
+  minUs: string;
+  p95Us: string;
+  maxUs: string;
+  opsSeg: string;
 };
 
 const resultados: MetricaServicio[] = [];
@@ -48,19 +48,71 @@ function medir(
 
   const ordenados = Array.from(tiempos).sort((a, b) => a - b);
   const totalMs = ordenados.reduce((acc, t) => acc + t, 0);
-  const aMicrosegundos = (ms: number) => Number((ms * 1000).toFixed(2));
+  const aUs = (ms: number) => (ms * 1000).toFixed(2);
 
   resultados.push({
-    Servicio: servicio,
-    Operacion: operacion,
-    Iteraciones: iteraciones,
-    "Total (ms)": Number(totalMs.toFixed(2)),
-    "Promedio (µs)": aMicrosegundos(totalMs / iteraciones),
-    "Min (µs)": aMicrosegundos(ordenados[0]!),
-    "P95 (µs)": aMicrosegundos(ordenados[Math.floor(iteraciones * 0.95)]!),
-    "Max (µs)": aMicrosegundos(ordenados[iteraciones - 1]!),
-    "Ops/seg": Math.round(iteraciones / (totalMs / 1000)),
+    servicio,
+    operacion,
+    iter: iteraciones,
+    totalMs: totalMs.toFixed(2),
+    promUs: aUs(totalMs / iteraciones),
+    minUs: aUs(ordenados[0]!),
+    p95Us: aUs(ordenados[Math.floor(iteraciones * 0.95)]!),
+    maxUs: aUs(ordenados[iteraciones - 1]!),
+    opsSeg: String(Math.round(iteraciones / (totalMs / 1000))),
   });
+}
+
+function imprimirTablaPorServicio(titulo: string, filas: MetricaServicio[]): void {
+  const cols = [
+    { key: "operacion", label: "Operacion", align: "left" as const },
+    { key: "iter", label: "Iter", align: "right" as const },
+    { key: "totalMs", label: "Total(ms)", align: "right" as const },
+    { key: "promUs", label: "Prom(µs)", align: "right" as const },
+    { key: "minUs", label: "Min(µs)", align: "right" as const },
+    { key: "p95Us", label: "P95(µs)", align: "right" as const },
+    { key: "maxUs", label: "Max(µs)", align: "right" as const },
+    { key: "opsSeg", label: "Ops/seg", align: "right" as const },
+  ] as const;
+
+  const widths = cols.map((c) =>
+    Math.max(
+      c.label.length,
+      ...filas.map((f) => String(f[c.key]).length),
+    ),
+  );
+
+  const sep = (left: string, mid: string, right: string) =>
+    left + widths.map((w) => "─".repeat(w + 2)).join(mid) + right;
+
+  const formatRow = (vals: string[], aligns: readonly ("left" | "right")[]) =>
+    "│" +
+    vals
+      .map((v, i) => {
+        const w = widths[i]!;
+        return " " + (aligns[i] === "right" ? v.padStart(w) : v.padEnd(w)) + " ";
+      })
+      .join("│") +
+    "│";
+
+  console.log(`\n▶ Servicio: ${titulo}`);
+  console.log(sep("┌", "┬", "┐"));
+  console.log(
+    formatRow(
+      cols.map((c) => c.label),
+      cols.map(() => "left"),
+    ),
+  );
+  console.log(sep("├", "┼", "┤"));
+  for (const fila of filas) {
+    console.log(
+      formatRow(
+        cols.map((c) => String(fila[c.key])),
+        cols.map((c) => c.align),
+      ),
+    );
+  }
+  console.log(sep("└", "┴", "┘"));
 }
 
 console.log("====================================================================");
@@ -69,19 +121,19 @@ console.log(`  Entorno: Node ${process.version} | ${os.platform()} ${os.release(
 console.log("====================================================================\n");
 
 // 1. Servicio: pagination.service
-medir("pagination.service", "parsePagination (por defecto)", ITERACIONES, () => {
+medir("pagination.service", "parsePagination (defecto)", ITERACIONES, () => {
   parsePagination();
 });
 
-medir("pagination.service", "parsePagination (query válido)", ITERACIONES, (i) => {
+medir("pagination.service", "parsePagination (válido)", ITERACIONES, (i) => {
   parsePagination({ page: String((i % 20) + 1), limit: "25" });
 });
 
-medir("pagination.service", "parsePagination (limit > MAX_LIMIT)", ITERACIONES, () => {
+medir("pagination.service", "parsePagination (max limit)", ITERACIONES, () => {
   parsePagination({ page: "2", limit: "500" });
 });
 
-medir("pagination.service", "parsePagination (valores inválidos)", ITERACIONES, () => {
+medir("pagination.service", "parsePagination (inválido)", ITERACIONES, () => {
   parsePagination({ page: "abc", limit: "-5" });
 });
 
@@ -127,7 +179,6 @@ medir("product-store", "adjustStock (+1 / -1)", ITERACIONES, (i) => {
   store.adjustStock(ids[i % ids.length]!, delta);
 });
 
-// Para list usamos un almacén con 1,000 productos para un volumen estándar de consulta
 const storeList = new ProductStore();
 for (let i = 0; i < 1000; i += 1) {
   storeList.create({
@@ -139,11 +190,11 @@ for (let i = 0; i < 1000; i += 1) {
   });
 }
 
-medir("product-store", "list (sin filtros - 1000 items)", ITERACIONES_LIST, () => {
+medir("product-store", "list (sin filtro 1000)", ITERACIONES_LIST, () => {
   storeList.list();
 });
 
-medir("product-store", "list (con filtros - 1000 items)", ITERACIONES_LIST, () => {
+medir("product-store", "list (con filtro 1000)", ITERACIONES_LIST, () => {
   storeList.list({
     search: "producto 1",
     category: "bebidas",
@@ -164,5 +215,11 @@ medir(
 );
 
 console.log("\n=== RESUMEN DE RENDIMIENTO POR SERVICIO ===");
-console.table(resultados);
-
+imprimirTablaPorServicio(
+  "src/services/pagination.service.ts",
+  resultados.filter((r) => r.servicio === "pagination.service"),
+);
+imprimirTablaPorServicio(
+  "src/services/product-store.ts",
+  resultados.filter((r) => r.servicio === "product-store"),
+);
