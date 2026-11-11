@@ -1,0 +1,10 @@
+{
+  // Config solo para el editor: da a los scripts de debug/ los tipos de Node.
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true,
+    "types": ["node"]
+  },
+  "include": ["./**/*", "../src/**/*", "../tests/**/*"]
+}

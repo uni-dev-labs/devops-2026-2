@@ -16,7 +16,8 @@
     "docker:logs": "docker compose logs -f api",
     "debug": "tsx --inspect src/index.ts",
     "perf": "tsx debug/rendimiento.ts",
-    "perf:profile": "node --cpu-prof --cpu-prof-dir=debug/profiles --import tsx debug/rendimiento.ts"
+    "perf:profile": "node --cpu-prof --cpu-prof-dir=debug/profiles --import tsx debug/rendimiento.ts",
+    "perf:tests": "vitest run --config vitest.trazabilidad.config.ts"
   },
   "keywords": [
     "express",
