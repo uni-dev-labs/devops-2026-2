@@ -167,7 +167,7 @@ Cada push a una rama `trazabilidad-*` corre el workflow **Trazabilidad y rendimi
 | --- | --- |
 | **CI · tipos, tests y build** | Verifica tipos (API y scripts de medición), corre los tests unitarios y los 32 de la práctica de productos, y compila. Si algo falla, no se mide. |
 | **Rendimiento · servicios de código** | Mide cada operación de `ProductStore` y de `pagination.service` (promedio, p50, p95, p99, máx y ops/s), cómo escala `list()` con 100, 1 000 y 5 000 productos, y la memoria por producto. Genera un perfil de CPU (`node --cpu-prof`) y muestra las funciones que más CPU consumen. |
-| **CD · despliegue con Docker Compose y carga por servicio** | Construye la imagen de producción y despliega el stack completo (`api`, `postgres`, `mongo`) con `docker compose`. Luego lanza 500 peticiones (10 en paralelo) a cada endpoint y agrupa los resultados por servicio, registra CPU y memoria de cada contenedor con `docker stats` y apaga el stack. Si un endpoint responde con un estado inesperado, el job falla. |
+| **CD · despliegue con Docker Compose y carga por servicio** | Construye la imagen de producción y despliega el stack completo (`api`, `postgres`, `mongo`) con `docker compose`. Luego lanza 1 000 peticiones (10 en paralelo) a cada endpoint y agrupa los resultados por servicio, registra CPU y memoria de cada contenedor con `docker stats` y apaga el stack. Si un endpoint responde con un estado inesperado, el job falla. |
 
 Cada reporte lleva el commit, la rama, la versión de Node y la CPU del runner, así cada número se puede rastrear hasta el código que lo produjo.
 

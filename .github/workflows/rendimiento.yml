@@ -113,7 +113,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       API_URL: http://localhost:3000
-      PERF_REQUESTS: "500"
+      PERF_REQUESTS: "1000"
       PERF_CONCURRENCIA: "10"
 
     steps:

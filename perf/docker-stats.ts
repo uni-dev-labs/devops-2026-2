@@ -122,8 +122,11 @@ const markdown = [
     ]),
   ),
   "",
-  `Durante la carga, **${masCpu.servicio}** es el contenedor que más CPU usa (${pct(masCpu.carga?.cpuPromedio)} en promedio, pico de ${pct(masCpu.carga?.cpuMaximo)}) ` +
-    `y **${masMem.servicio}** el que más memoria ocupa (${mib(masMem.carga?.memMaximoMiB)}).`,
+  masCpu.contenedor === masMem.contenedor
+    ? `Durante la carga, **${masCpu.servicio}** es el contenedor que más CPU usa (${pct(masCpu.carga?.cpuPromedio)} en promedio, pico de ${pct(masCpu.carga?.cpuMaximo)}) ` +
+      `y también el que más memoria ocupa (${mib(masMem.carga?.memMaximoMiB)}).`
+    : `Durante la carga, **${masCpu.servicio}** es el contenedor que más CPU usa (${pct(masCpu.carga?.cpuPromedio)} en promedio, pico de ${pct(masCpu.carga?.cpuMaximo)}) ` +
+      `y **${masMem.servicio}** el que más memoria ocupa (${mib(masMem.carga?.memMaximoMiB)}).`,
   "",
 ].join("\n");
 
