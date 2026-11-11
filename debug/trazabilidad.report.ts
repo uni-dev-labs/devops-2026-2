@@ -1,3 +1,4 @@
+/// <reference types="node" />
 /**
  * globalSetup de Vitest: al terminar los tests lee debug/trazabilidad-results.json
  * (escrito por trazabilidad.setup.ts) e imprime la traza por test y el resumen por función.

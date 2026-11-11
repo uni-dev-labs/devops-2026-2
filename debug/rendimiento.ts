@@ -1,7 +1,8 @@
+/// <reference types="node" />
 /**
- * Taller de Trazabilidad: medición de rendimiento de cada servicio.
+ * Taller de Trazabilidad: medición de rendimiento del servicio de productos.
  *
- * Mide cada método de los servicios en src/services con dos técnicas:
+ * Mide cada método de ProductStore (src/services/product-store.ts) con dos técnicas:
  *  - console.time / console.timeEnd → tiempo total de cada bloque.
  *  - performance.now()             → promedio, mínimo, máximo y p95 por llamada.
  *
@@ -10,7 +11,6 @@
  */
 
 import { performance } from "node:perf_hooks";
-import { parsePagination } from "../src/services/pagination.service.js";
 import { ProductStore, ProductError } from "../src/services/product-store.js";
 
 const ITERACIONES = Number(process.env.ITERACIONES ?? 10_000);
@@ -54,17 +54,8 @@ function medir(
   });
 }
 
-console.log(`\n=== Medición de rendimiento de servicios (${ITERACIONES} iteraciones) ===\n`);
+console.log(`\n=== Medición de rendimiento del servicio de productos (${ITERACIONES} iteraciones) ===\n`);
 
-// ---------- pagination.service ----------
-medir("pagination", "parsePagination(valido)", ITERACIONES, (i) => {
-  parsePagination({ page: String((i % 20) + 1), limit: "25" });
-});
-medir("pagination", "parsePagination(invalido)", ITERACIONES, () => {
-  parsePagination({ page: "abc", limit: "-5" });
-});
-
-// ---------- product-store ----------
 const store = new ProductStore();
 const ids: string[] = [];
 const categorias = ["tecnologia", "hogar", "ropa", "deportes"];

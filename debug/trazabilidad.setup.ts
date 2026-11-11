@@ -1,3 +1,4 @@
+/// <reference types="node" />
 /**
  * Trazabilidad por test: mide cuánto tarda CADA llamada a ProductStore
  * dentro de cada test (no el test completo).
