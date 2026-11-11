@@ -159,3 +159,15 @@ Body esperado en POST `/users`:
 - **mongo** — MongoDB 7, expuesto en el puerto `27017`
 
 Dentro de la red de Docker, la API se conecta a las bases usando el nombre del servicio (`postgres` y `mongo`), no `localhost`.
+## Rendimiento de los servicios
+
+Los benchmarks de [`bench/`](bench/) miden cada servicio de `src/services` con el modo benchmark de Vitest:
+
+- `bench/pagination.service.bench.ts` — `parsePagination` con query vacío, válido, con `limit` por encima del máximo y con valores inválidos.
+- `bench/product-store.bench.ts` — operaciones de escritura (`create`, `update`, `adjustStock`, `remove`) y de lectura (`getById`, `getBySku`, `list` con y sin filtros) sobre un almacén con 1000 productos.
+
+```bash
+npm run bench
+```
+
+Por cada caso se reporta `hz` (operaciones por segundo), tiempos `min`/`max`/`mean`/percentiles en milisegundos y `rme` (margen de error relativo). Los resultados dependen de la máquina, así que sirven para comparar casos entre sí y detectar regresiones, no como valores absolutos.
