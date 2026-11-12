@@ -60,6 +60,10 @@ const NAME_MAX = 80;
 const SKU_MIN = 2;
 const SKU_MAX = 32;
 
+// Crear el comparador una sola vez: `a.localeCompare(b, "es", opts)` construye un Intl.Collator
+// en cada llamada, y ordenar n productos hace ~n·log(n) comparaciones (ver RENDIMIENTO.md).
+const NAME_COLLATOR = new Intl.Collator("es", { sensitivity: "base" });
+
 // ---------- Validación y normalización ----------
 
 function invalid(message: string): never {
@@ -138,6 +142,8 @@ function copy(product: Product): Product {
 
 export class ProductStore {
   private readonly products = new Map<string, Product>();
+  // Índice sku → id: buscar por sku pasa de recorrer todo el almacén (O(n)) a O(1).
+  private readonly idBySku = new Map<string, string>();
 
   create(input: CreateProductInput): Product {
     if (input === null || typeof input !== "object") invalid("Los datos del producto son obligatorios");
@@ -165,6 +171,7 @@ export class ProductStore {
     };
 
     this.products.set(product.id, product);
+    this.idBySku.set(product.sku, product.id);
     return copy(product);
   }
 
@@ -191,14 +198,21 @@ export class ProductStore {
       invalid("minPrice no puede ser mayor que maxPrice");
     }
 
-    return [...this.products.values()]
-      .filter((p) => search === undefined || p.name.toLowerCase().includes(search))
-      .filter((p) => category === undefined || (p.category ?? "").toLowerCase() === category)
-      .filter((p) => query.active === undefined || p.active === query.active)
-      .filter((p) => minPrice === undefined || p.price >= minPrice)
-      .filter((p) => maxPrice === undefined || p.price <= maxPrice)
+    const { active } = query;
+    const matches: Product[] = [];
+    // Una sola pasada aplicando todos los filtros (antes eran 5 .filter() con 5 arreglos intermedios).
+    for (const p of this.products.values()) {
+      if (search !== undefined && !p.name.toLowerCase().includes(search)) continue;
+      if (category !== undefined && (p.category ?? "").toLowerCase() !== category) continue;
+      if (active !== undefined && p.active !== active) continue;
+      if (minPrice !== undefined && p.price < minPrice) continue;
+      if (maxPrice !== undefined && p.price > maxPrice) continue;
+      matches.push(p);
+    }
+
+    return matches
       .sort((a, b) => {
-        const byName = a.name.localeCompare(b.name, "es", { sensitivity: "base" });
+        const byName = NAME_COLLATOR.compare(a.name, b.name);
         if (byName !== 0) return byName;
         return a.sku < b.sku ? -1 : a.sku > b.sku ? 1 : 0;
       })
@@ -245,11 +259,18 @@ export class ProductStore {
     next.createdAt = new Date(current.createdAt.getTime());
     next.updatedAt = new Date();
     this.products.set(current.id, next);
+    if (next.sku !== current.sku) {
+      this.idBySku.delete(current.sku);
+      this.idBySku.set(next.sku, current.id);
+    }
     return copy(next);
   }
 
   remove(id: string): boolean {
     if (typeof id !== "string") return false;
+    const product = this.products.get(id);
+    if (!product) return false;
+    this.idBySku.delete(product.sku);
     return this.products.delete(id);
   }
 
@@ -278,10 +299,8 @@ export class ProductStore {
     if (typeof sku !== "string") return undefined;
     const normalized = sku.trim().toUpperCase();
     if (normalized.length === 0) return undefined;
-    for (const product of this.products.values()) {
-      if (product.sku === normalized) return product;
-    }
-    return undefined;
+    const id = this.idBySku.get(normalized);
+    return id === undefined ? undefined : this.products.get(id);
   }
 
   private assertSkuAvailable(sku: string, ownerId?: string): void {
