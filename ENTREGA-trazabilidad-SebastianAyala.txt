@@ -1,6 +1,4 @@
 TALLER DE TRAZABILIDAD - DEVOPS 2026-2
-=======================================
-
 Estudiante : Sebastian Ayala
 Repositorio: https://github.com/uni-dev-labs/devops-2026-2
 Rama       : trazabilidad-ayalagarcia
@@ -9,16 +7,6 @@ Informe    : https://github.com/uni-dev-labs/devops-2026-2/blob/trazabilidad-aya
 Fecha      : 11 de noviembre de 2026
 
 
-Que hice
---------
-Le agregue trazabilidad a la API: cada peticion tiene un id (X-Trace-Id) y en el
-header Server-Timing se ve cuanto se demoro cada consulta a Postgres y a Mongo.
-Despues medi los servicios con benchmarks de Vitest y con pruebas de carga
-(1000 peticiones por endpoint) con el proyecto corriendo en Docker.
-
-
-Cuanto se demoraron los servicios
----------------------------------
 Endpoints (promedio por peticion):
 - GET  /health                 4.68 ms
 - GET  /api/postgres/health    5.83 ms
@@ -42,25 +30,20 @@ ProductStore con 10.000 productos (antes -> despues de arreglarlo):
 
 
 Hallazgos
----------
+
 1. list() era muy lento porque localeCompare crea un comparador nuevo cada vez
    que compara dos productos. Lo cambie por un Intl.Collator que se crea una
    sola vez y quedo 43 veces mas rapido.
-
 2. Para buscar por sku se recorrian todos los productos. Agregue un Map de
    sku -> id y ahora buscar, crear y actualizar es mucho mas rapido.
-
 3. Con la trazabilidad vi que en /api/postgres/users se hacia un CREATE TABLE
    en cada peticion, y eso era casi la mitad del tiempo. Ahora se hace una sola
    vez y el endpoint paso de 1249 a 1778 peticiones por segundo.
-
 4. GET /api/products no tiene paginacion, entonces cuando hay muchos productos
    se pone lento (con 2060 productos tardaba 54 ms). No lo cambie, lo deje
    anotado.
 
-
 Validaciones
-------------
 - npm test: 36 tests pasan (agregue 28 para la trazabilidad).
 - npm run test:productos: 32/32 pasan.
 - typecheck y build sin errores.
