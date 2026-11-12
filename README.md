@@ -159,3 +159,39 @@ Body esperado en POST `/users`:
 - **mongo** — MongoDB 7, expuesto en el puerto `27017`
 
 Dentro de la red de Docker, la API se conecta a las bases usando el nombre del servicio (`postgres` y `mongo`), no `localhost`.
+
+## Trazabilidad: tiempos de ejecución
+
+### 1. Tiempo de cada servicio (script)
+
+```bash
+npm run trazabilidad           # 1000 iteraciones por servicio
+npm run trazabilidad -- 5000   # iteraciones personalizadas
+```
+
+Mide con `performance.now()` cada método de `ProductStore` (`create`, `getById`, `getBySku`, `list` sin y con filtros, `update`, `adjustStock`, `remove`) con almacenes de 100, 1.000 y 10.000 productos, y el servicio `parsePagination`. Por cada servicio calcula promedio, mediana, p95, mínimo, máximo y ops/s.
+
+El reporte queda en [`docs/trazabilidad/tiempos-servicios.md`](docs/trazabilidad/tiempos-servicios.md) y en `.csv`.
+
+**Hallazgo:** `list()` sin filtros es el servicio más costoso y crece con el número de productos (≈1 ms con 100, ≈8 ms con 1.000 y ≈75 ms con 10.000), porque en cada llamada ordena todo el almacén por nombre con `localeCompare` y copia cada producto. Con filtros es más rápido porque ordena menos elementos. El resto de operaciones (búsqueda por id o sku, `update`, `adjustStock`, `remove`) se mantienen por debajo de 0,01 ms.
+
+### 2. Tiempo de cada endpoint (middleware)
+
+Cada petición pasa por `src/middlewares/trazabilidad.ts`, que:
+
+- agrega la cabecera `X-Request-Id` (respeta la que envíe el cliente) para seguir la petición en los logs,
+- agrega la cabecera `X-Response-Time` con lo que tardó la respuesta,
+- imprime `[trazabilidad] <id> MÉTODO ruta -> status en X ms` en consola,
+- acumula los tiempos por endpoint (agrupando rutas con parámetros).
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/trazabilidad` | Resumen por endpoint (llamadas, errores 5xx, promedio, mín, máx, p95, total) y resumen general |
+| DELETE | `/api/trazabilidad` | Reinicia las métricas |
+
+```bash
+curl -i http://localhost:3000/health
+curl http://localhost:3000/api/trazabilidad
+```
+
+Las pruebas están en `tests/trazabilidad.test.ts`.
