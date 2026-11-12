@@ -1,12 +1,44 @@
 import { Router, type Request, type Response } from "express";
 import { pgPool } from "../db/postgres.js";
 import { parsePagination } from "../services/pagination.service.js";
+import { withSpan } from "../observability/tracer.js";
 
 export const postgresRouter = Router();
 
+const CREATE_USERS_TABLE = `
+  CREATE TABLE IF NOT EXISTS users (
+    id SERIAL PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT UNIQUE NOT NULL,
+    created_at TIMESTAMPTZ DEFAULT NOW()
+  )
+`;
+
+// La trazabilidad mostró que este CREATE TABLE IF NOT EXISTS corría en *cada* petición y se
+// llevaba casi la mitad del tiempo de servidor de /users (ver RENDIMIENTO.md). Ahora se ejecuta
+// una sola vez por proceso; si falla, se olvida la promesa para reintentar en la siguiente petición.
+let usersTableReady: Promise<unknown> | null = null;
+
+function ensureUsersTable(): Promise<unknown> {
+  if (!usersTableReady) {
+    usersTableReady = withSpan("pg.ensureUsersTable", () => pgPool.query(CREATE_USERS_TABLE)).catch(
+      (error: unknown) => {
+        usersTableReady = null;
+        throw error;
+      },
+    );
+  }
+  return usersTableReady;
+}
+
+/** Solo para tests: vuelve a exigir el CREATE TABLE en la siguiente petición. */
+export function resetUsersTableCache(): void {
+  usersTableReady = null;
+}
+
 postgresRouter.get("/health", async (_req: Request, res: Response) => {
   try {
-    const result = await pgPool.query("SELECT NOW() AS now");
+    const result = await withSpan("pg.ping", () => pgPool.query("SELECT NOW() AS now"));
     res.json({
       status: "ok",
       database: "postgresql",
@@ -24,20 +56,15 @@ postgresRouter.get("/health", async (_req: Request, res: Response) => {
 
 postgresRouter.get("/users", async (req: Request, res: Response) => {
   try {
-    const { limit, offset } = parsePagination(req.query);
+    const { limit, offset } = withSpan("pagination.parse", () => parsePagination(req.query));
 
-    await pgPool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
+    await ensureUsersTable();
 
-    const result = await pgPool.query(
-      "SELECT id, name, email, created_at FROM users ORDER BY id ASC LIMIT $1 OFFSET $2",
-      [limit, offset]
+    const result = await withSpan("pg.selectUsers", () =>
+      pgPool.query(
+        "SELECT id, name, email, created_at FROM users ORDER BY id ASC LIMIT $1 OFFSET $2",
+        [limit, offset],
+      ),
     );
 
     res.json({
@@ -64,20 +91,15 @@ postgresRouter.post("/users", async (req: Request, res: Response) => {
       return;
     }
 
-    await pgPool.query(`
-      CREATE TABLE IF NOT EXISTS users (
-        id SERIAL PRIMARY KEY,
-        name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
-        created_at TIMESTAMPTZ DEFAULT NOW()
-      )
-    `);
+    await ensureUsersTable();
 
-    const result = await pgPool.query(
-      `INSERT INTO users (name, email)
-       VALUES ($1, $2)
-       RETURNING id, name, email, created_at`,
-      [name, email]
+    const result = await withSpan("pg.insertUser", () =>
+      pgPool.query(
+        `INSERT INTO users (name, email)
+         VALUES ($1, $2)
+         RETURNING id, name, email, created_at`,
+        [name, email],
+      ),
     );
 
     res.status(201).json({

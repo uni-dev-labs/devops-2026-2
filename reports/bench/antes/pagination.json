@@ -1,0 +1,44 @@
+{
+  "group": "pagination",
+  "label": "antes",
+  "node": "v24.21.0",
+  "date": "2026-11-12T04:29:31.063Z",
+  "rows": [
+    {
+      "name": "sin query (por defecto)",
+      "opsPerSec": 13061563,
+      "meanUs": 0.058,
+      "p50Us": 0.1,
+      "p99Us": 0.1,
+      "rmePct": 0.11,
+      "samples": 6887826
+    },
+    {
+      "name": "válido { page: '3', limit: '20' }",
+      "opsPerSec": 11679419,
+      "meanUs": 0.067,
+      "p50Us": 0.1,
+      "p99Us": 0.1,
+      "rmePct": 0.09,
+      "samples": 5983733
+    },
+    {
+      "name": "limit mayor al máximo",
+      "opsPerSec": 11725526,
+      "meanUs": 0.066,
+      "p50Us": 0.1,
+      "p99Us": 0.1,
+      "rmePct": 0.09,
+      "samples": 6030560
+    },
+    {
+      "name": "inválido { page: 'abc', limit: '-5' }",
+      "opsPerSec": 8458255,
+      "meanUs": 0.132,
+      "p50Us": 0.1,
+      "p99Us": 0.2,
+      "rmePct": 0.15,
+      "samples": 3031940
+    }
+  ]
+}

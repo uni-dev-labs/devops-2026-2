@@ -1,0 +1,205 @@
+{
+  "label": "antes",
+  "date": "2026-11-12T04:33:58.075Z",
+  "runId": "9afd9019",
+  "baseUrl": "http://localhost:3000",
+  "requestsPerEndpoint": 1000,
+  "concurrency": 10,
+  "node": "v24.21.0",
+  "results": [
+    {
+      "endpoint": "GET /health",
+      "requests": 1000,
+      "errors": 0,
+      "statuses": [
+        200
+      ],
+      "traceIdPropagated": true,
+      "reqPerSec": 2259,
+      "avgMs": 4.39,
+      "p50Ms": 3.44,
+      "p95Ms": 8.21,
+      "p99Ms": 15.91,
+      "maxMs": 21.85,
+      "serverSpansAvgMs": {
+        "total": 0.11
+      }
+    },
+    {
+      "endpoint": "GET /api/postgres/health",
+      "requests": 1000,
+      "errors": 0,
+      "statuses": [
+        200
+      ],
+      "traceIdPropagated": true,
+      "reqPerSec": 1740,
+      "avgMs": 5.72,
+      "p50Ms": 5.2,
+      "p95Ms": 9.01,
+      "p99Ms": 15.66,
+      "maxMs": 26.83,
+      "serverSpansAvgMs": {
+        "pg.ping": 1.92,
+        "total": 2.03
+      }
+    },
+    {
+      "endpoint": "GET /api/postgres/users",
+      "requests": 1000,
+      "errors": 0,
+      "statuses": [
+        200
+      ],
+      "traceIdPropagated": true,
+      "reqPerSec": 1249,
+      "avgMs": 7.98,
+      "p50Ms": 7.58,
+      "p95Ms": 12.25,
+      "p99Ms": 14.62,
+      "maxMs": 15.98,
+      "serverSpansAvgMs": {
+        "pagination.parse": 0.01,
+        "pg.ensureUsersTable": 2.08,
+        "pg.selectUsers": 2.13,
+        "total": 4.34
+      }
+    },
+    {
+      "endpoint": "POST /api/postgres/users",
+      "requests": 1000,
+      "errors": 0,
+      "statuses": [
+        201
+      ],
+      "traceIdPropagated": true,
+      "reqPerSec": 1343,
+      "avgMs": 7.41,
+      "p50Ms": 7.05,
+      "p95Ms": 12.17,
+      "p99Ms": 16.61,
+      "maxMs": 21.45,
+      "serverSpansAvgMs": {
+        "pg.ensureUsersTable": 1.73,
+        "pg.insertUser": 2.49,
+        "total": 4.42
+      }
+    },
+    {
+      "endpoint": "GET /api/mongo/health",
+      "requests": 1000,
+      "errors": 0,
+      "statuses": [
+        200
+      ],
+      "traceIdPropagated": true,
+      "reqPerSec": 1517,
+      "avgMs": 6.55,
+      "p50Ms": 5.93,
+      "p95Ms": 10.19,
+      "p99Ms": 19.17,
+      "maxMs": 25.54,
+      "serverSpansAvgMs": {
+        "mongo.ping": 2.22,
+        "total": 2.32
+      }
+    },
+    {
+      "endpoint": "GET /api/mongo/users",
+      "requests": 1000,
+      "errors": 0,
+      "statuses": [
+        200
+      ],
+      "traceIdPropagated": true,
+      "reqPerSec": 1518,
+      "avgMs": 6.56,
+      "p50Ms": 6,
+      "p95Ms": 9.96,
+      "p99Ms": 16.74,
+      "maxMs": 23.21,
+      "serverSpansAvgMs": {
+        "pagination.parse": 0.01,
+        "mongo.findUsers": 2.23,
+        "total": 2.32
+      }
+    },
+    {
+      "endpoint": "POST /api/mongo/users",
+      "requests": 1000,
+      "errors": 0,
+      "statuses": [
+        201
+      ],
+      "traceIdPropagated": true,
+      "reqPerSec": 1406,
+      "avgMs": 7.08,
+      "p50Ms": 6.69,
+      "p95Ms": 10.83,
+      "p99Ms": 15.86,
+      "maxMs": 21.2,
+      "serverSpansAvgMs": {
+        "mongo.insertUser": 2.4,
+        "total": 2.58
+      }
+    },
+    {
+      "endpoint": "GET /api/products",
+      "requests": 1000,
+      "errors": 0,
+      "statuses": [
+        200
+      ],
+      "traceIdPropagated": true,
+      "reqPerSec": 1696,
+      "avgMs": 5.87,
+      "p50Ms": 5.55,
+      "p95Ms": 8.81,
+      "p99Ms": 11.47,
+      "maxMs": 15.93,
+      "serverSpansAvgMs": {
+        "mongo.findProducts": 2.05,
+        "total": 2.14
+      }
+    },
+    {
+      "endpoint": "POST /api/products",
+      "requests": 1000,
+      "errors": 0,
+      "statuses": [
+        201
+      ],
+      "traceIdPropagated": true,
+      "reqPerSec": 1697,
+      "avgMs": 5.87,
+      "p50Ms": 5.47,
+      "p95Ms": 8.22,
+      "p99Ms": 14.39,
+      "maxMs": 21.06,
+      "serverSpansAvgMs": {
+        "mongo.insertProduct": 1.99,
+        "total": 2.15
+      }
+    }
+  ],
+  "dockerStats": [
+    {
+      "container": "devops-api",
+      "peakCpuPct": 138.76,
+      "peakMemMiB": 78.47,
+      "samples": 3
+    },
+    {
+      "container": "devops-postgres",
+      "peakCpuPct": 28.25,
+      "peakMemMiB": 51.43,
+      "samples": 3
+    },
+    {
+      "container": "devops-mongo",
+      "peakCpuPct": 19.82,
+      "peakMemMiB": 77.24,
+      "samples": 3
+    }
+  ]
+}

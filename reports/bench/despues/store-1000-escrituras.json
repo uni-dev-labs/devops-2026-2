@@ -1,0 +1,44 @@
+{
+  "group": "store-1000-escrituras",
+  "label": "despues",
+  "node": "v24.21.0",
+  "date": "2026-11-12T04:30:30.492Z",
+  "rows": [
+    {
+      "name": "create + remove",
+      "opsPerSec": 818334,
+      "meanUs": 1.303,
+      "p50Us": 1.2,
+      "p99Us": 3,
+      "rmePct": 1.04,
+      "samples": 306878
+    },
+    {
+      "name": "update({ price })",
+      "opsPerSec": 2434527,
+      "meanUs": 0.44,
+      "p50Us": 0.4,
+      "p99Us": 0.8,
+      "rmePct": 2.59,
+      "samples": 909156
+    },
+    {
+      "name": "update({ sku })",
+      "opsPerSec": 2116927,
+      "meanUs": 0.509,
+      "p50Us": 0.5,
+      "p99Us": 0.9,
+      "rmePct": 5.64,
+      "samples": 785112
+    },
+    {
+      "name": "adjustStock(+1)",
+      "opsPerSec": 3428284,
+      "meanUs": 0.316,
+      "p50Us": 0.3,
+      "p99Us": 0.7,
+      "rmePct": 0.45,
+      "samples": 1266774
+    }
+  ]
+}

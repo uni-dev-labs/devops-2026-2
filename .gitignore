@@ -5,3 +5,6 @@ productos-results.json
 *.log
 .DS_Store
 material-de-clase/
+# Corridas locales sin etiqueta; las de "antes" y "despues" sí se versionan como evidencia.
+reports/bench/actual/
+reports/endpoints/actual.*
