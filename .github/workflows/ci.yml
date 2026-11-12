@@ -65,3 +65,36 @@ jobs:
       - name: Publicar nota
         if: always()
         run: node scripts/grade-productos.mjs productos-results.json
+
+  rendimiento:
+    name: Rendimiento de servicios
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Descargar el código
+        uses: actions/checkout@v5
+
+      - name: Instalar Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Instalar dependencias
+        run: npm ci
+
+      - name: Correr benchmarks
+        env:
+          BENCH_LABEL: ci
+        run: npm run bench
+
+      # Compara contra la línea base versionada y deja la tabla en el resumen del run de Actions,
+      # así cada commit queda trazado con sus tiempos.
+      - name: Publicar comparación en el resumen
+        run: node scripts/bench-report.mjs antes ci >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Guardar resultados
+        uses: actions/upload-artifact@v4
+        with:
+          name: bench-${{ github.sha }}
+          path: reports/bench/

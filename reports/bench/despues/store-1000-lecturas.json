@@ -1,0 +1,53 @@
+{
+  "group": "store-1000-lecturas",
+  "label": "despues",
+  "node": "v24.21.0",
+  "date": "2026-11-12T04:30:27.124Z",
+  "rows": [
+    {
+      "name": "getById",
+      "opsPerSec": 5418812,
+      "meanUs": 0.204,
+      "p50Us": 0.2,
+      "p99Us": 0.4,
+      "rmePct": 0.24,
+      "samples": 1960341
+    },
+    {
+      "name": "getBySku (último sku)",
+      "opsPerSec": 6001510,
+      "meanUs": 0.203,
+      "p50Us": 0.2,
+      "p99Us": 0.3,
+      "rmePct": 12.58,
+      "samples": 1971903
+    },
+    {
+      "name": "list() sin filtros",
+      "opsPerSec": 1270,
+      "meanUs": 854.887,
+      "p50Us": 776.6,
+      "p99Us": 1082.723,
+      "rmePct": 14.27,
+      "samples": 468
+    },
+    {
+      "name": "list({ category, minPrice, maxPrice })",
+      "opsPerSec": 19702,
+      "meanUs": 51.326,
+      "p50Us": 49.6,
+      "p99Us": 81.7,
+      "rmePct": 0.38,
+      "samples": 7794
+    },
+    {
+      "name": "list({ search })",
+      "opsPerSec": 14822,
+      "meanUs": 67.968,
+      "p50Us": 66.3,
+      "p99Us": 91.515,
+      "rmePct": 0.38,
+      "samples": 5886
+    }
+  ]
+}

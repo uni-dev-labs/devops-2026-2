@@ -159,3 +159,13 @@ Body esperado en POST `/users`:
 - **mongo** — MongoDB 7, expuesto en el puerto `27017`
 
 Dentro de la red de Docker, la API se conecta a las bases usando el nombre del servicio (`postgres` y `mongo`), no `localhost`.
+## Trazabilidad y rendimiento
+
+Cada petición devuelve `X-Trace-Id` y `Server-Timing` con el desglose de tiempos (base de datos, paginación, total). Las mediciones, el análisis y las optimizaciones están en **[RENDIMIENTO.md](RENDIMIENTO.md)**. La instrumentación está documentada en [src/observability/README.md](src/observability/README.md).
+
+| Comando | Qué mide |
+|---|---|
+| `npm run bench` | Benchmarks de `ProductStore` (100 / 1.000 / 10.000 productos) y `parsePagination` |
+| `BENCH_LABEL=despues npm run bench` y luego `npm run bench:report` | Compara dos corridas (antes vs después) |
+| `npm run perf:endpoints -- --requests 1000 --concurrency 10` | Carga contra la API levantada con Docker: latencia, req/s, desglose por span y CPU/RAM de los contenedores |
+| `curl localhost:3000/api/traces/stats` | p50/p95 por ruta de las últimas peticiones |

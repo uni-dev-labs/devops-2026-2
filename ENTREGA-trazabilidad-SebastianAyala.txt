@@ -1,0 +1,80 @@
+TALLER DE TRAZABILIDAD - DEVOPS 2026-2
+=======================================
+
+Estudiante : Sebastian Ayala
+Repositorio: https://github.com/uni-dev-labs/devops-2026-2
+Rama       : trazabilidad-ayalagarcia
+Link rama  : https://github.com/uni-dev-labs/devops-2026-2/tree/trazabilidad-ayalagarcia
+Informe    : https://github.com/uni-dev-labs/devops-2026-2/blob/trazabilidad-ayalagarcia/RENDIMIENTO.md
+Fecha      : 11 de noviembre de 2026
+
+Entorno: AMD Ryzen 7 5800X, 16 GB RAM, Windows 11, Node 24 / Docker 29.8.1
+         (API node:22-alpine + postgres:16-alpine + mongo:7 con docker compose)
+
+
+1. TIEMPO DE LOS ENDPOINTS (1.000 peticiones por endpoint, concurrencia 10)
+---------------------------------------------------------------------------
+Latencia medida desde el cliente, con la version final (despues de optimizar).
+
+Endpoint                     Promedio    p95       Peticiones/s   Errores
+GET  /health                 4.68 ms     8.79 ms   2119           0
+GET  /api/postgres/health    5.83 ms     9.69 ms   1707           0
+GET  /api/postgres/users     5.59 ms     8.78 ms   1778           0
+POST /api/postgres/users     6.25 ms    10.76 ms   1595           0
+GET  /api/mongo/health       6.31 ms     9.55 ms   1578           0
+GET  /api/mongo/users        6.98 ms    10.91 ms   1428           0
+POST /api/mongo/users        6.98 ms    11.07 ms   1426           0
+GET  /api/products           5.81 ms     8.86 ms   1714           0
+POST /api/products           5.97 ms     8.76 ms   1666           0
+
+
+2. TIEMPO DENTRO DEL SERVIDOR POR TRAMO (trazabilidad con Server-Timing)
+-------------------------------------------------------------------------
+Endpoint                     Tramo (span)              Tiempo    Total servidor
+GET  /health                 (solo middleware)         -         0.12 ms
+GET  /api/postgres/health    pg.ping                   1.99 ms   2.10 ms
+GET  /api/postgres/users     pg.selectUsers            1.78 ms   1.92 ms
+POST /api/postgres/users     pg.insertUser             2.94 ms   3.16 ms
+GET  /api/mongo/health       mongo.ping                2.11 ms   2.20 ms
+GET  /api/mongo/users        mongo.findUsers           2.34 ms   2.45 ms
+POST /api/mongo/users        mongo.insertUser          2.37 ms   2.56 ms
+GET  /api/products           mongo.findProducts        1.93 ms   2.01 ms
+POST /api/products           mongo.insertProduct       2.01 ms   2.17 ms
+
+Arranque de la API: lista en ~281 ms (conexion Postgres 21.4 ms, conexion Mongo 21.8 ms)
+
+
+3. TIEMPO DE LOS SERVICIOS EN MEMORIA (benchmarks Vitest, 10.000 productos)
+----------------------------------------------------------------------------
+Operacion                          Antes        Despues      Mejora
+ProductStore.getById               0.19 us      0.19 us      igual
+ProductStore.getBySku              64.66 us     0.18 us      365x
+ProductStore.create + remove       46.03 us     1.33 us      35x
+ProductStore.update(price)         29.86 us     0.53 us      57x
+ProductStore.adjustStock           0.36 us      0.37 us      igual
+ProductStore.list() sin filtros    353.17 ms    8.28 ms      43x
+ProductStore.list(filtros)         18.38 ms     0.55 ms      34x
+ProductStore.list(search)          10.14 ms     0.57 ms      18x
+parsePagination                    0.06-0.13 us              (despreciable)
+
+
+4. HALLAZGOS Y MEJORAS
+----------------------
+1) list() usaba localeCompare con locale en cada comparacion del sort
+   -> se reutiliza un Intl.Collator: 353 ms -> 8.3 ms (43x).
+2) Buscar por sku recorria todo el almacen (O(n))
+   -> indice Map sku->id: getBySku 365x, create 35x, update 57x mas rapido.
+3) La traza mostro que CREATE TABLE IF NOT EXISTS corria en CADA peticion
+   (48% del tiempo de GET /api/postgres/users)
+   -> se ejecuta una sola vez: 1249 -> 1778 peticiones/s (+42%),
+      p95 12.25 -> 8.78 ms, tiempo de servidor 4.34 -> 1.92 ms.
+4) GET /api/products no tiene paginacion: con 2.060 productos tarda 54.6 ms
+   en vez de 5.9 ms. Queda documentado como recomendacion.
+
+
+5. VALIDACION
+-------------
+- Tests generales: 36 pasan (8 originales + 28 nuevos de trazabilidad).
+- Practica productos: 32/32 pasan (nota 5.0).
+- Typecheck y build sin errores.
+- 18.000 peticiones medidas, 0 errores.
