@@ -6,120 +6,63 @@ Repositorio: https://github.com/uni-dev-labs/devops-2026-2
 Rama       : trazabilidad-ayalagarcia
 Link rama  : https://github.com/uni-dev-labs/devops-2026-2/tree/trazabilidad-ayalagarcia
 Informe    : https://github.com/uni-dev-labs/devops-2026-2/blob/trazabilidad-ayalagarcia/RENDIMIENTO.md
-Pull request: https://github.com/uni-dev-labs/devops-2026-2/pull/125
 Fecha      : 11 de noviembre de 2026
 
-Entorno: AMD Ryzen 7 5800X, 16 GB RAM, Windows 11, Node 24 / Docker 29.8.1
-         (API node:22-alpine + postgres:16-alpine + mongo:7 con docker compose)
+
+Que hice
+--------
+Le agregue trazabilidad a la API: cada peticion tiene un id (X-Trace-Id) y en el
+header Server-Timing se ve cuanto se demoro cada consulta a Postgres y a Mongo.
+Despues medi los servicios con benchmarks de Vitest y con pruebas de carga
+(1000 peticiones por endpoint) con el proyecto corriendo en Docker.
 
 
-1. TIEMPO DE LOS ENDPOINTS (1.000 peticiones por endpoint, concurrencia 10)
----------------------------------------------------------------------------
-Latencia medida desde el cliente, con la version final (despues de optimizar).
+Cuanto se demoraron los servicios
+---------------------------------
+Endpoints (promedio por peticion):
+- GET  /health                 4.68 ms
+- GET  /api/postgres/health    5.83 ms
+- GET  /api/postgres/users     5.59 ms
+- POST /api/postgres/users     6.25 ms
+- GET  /api/mongo/health       6.31 ms
+- GET  /api/mongo/users        6.98 ms
+- POST /api/mongo/users        6.98 ms
+- GET  /api/products           5.81 ms
+- POST /api/products           5.97 ms
 
-Endpoint                     Promedio    p95       Peticiones/s   Errores
-GET  /health                 4.68 ms     8.79 ms   2119           0
-GET  /api/postgres/health    5.83 ms     9.69 ms   1707           0
-GET  /api/postgres/users     5.59 ms     8.78 ms   1778           0
-POST /api/postgres/users     6.25 ms    10.76 ms   1595           0
-GET  /api/mongo/health       6.31 ms     9.55 ms   1578           0
-GET  /api/mongo/users        6.98 ms    10.91 ms   1428           0
-POST /api/mongo/users        6.98 ms    11.07 ms   1426           0
-GET  /api/products           5.81 ms     8.86 ms   1714           0
-POST /api/products           5.97 ms     8.76 ms   1666           0
+Casi todo ese tiempo es la consulta a la base de datos (unos 2 ms), el codigo
+de la API se demora menos de 0.2 ms. La API arranca en unos 280 ms.
 
-
-2. TIEMPO DENTRO DEL SERVIDOR POR TRAMO (trazabilidad con Server-Timing)
--------------------------------------------------------------------------
-Endpoint                     Tramo (span)              Tiempo    Total servidor
-GET  /health                 (solo middleware)         -         0.12 ms
-GET  /api/postgres/health    pg.ping                   1.99 ms   2.10 ms
-GET  /api/postgres/users     pg.selectUsers            1.78 ms   1.92 ms
-POST /api/postgres/users     pg.insertUser             2.94 ms   3.16 ms
-GET  /api/mongo/health       mongo.ping                2.11 ms   2.20 ms
-GET  /api/mongo/users        mongo.findUsers           2.34 ms   2.45 ms
-POST /api/mongo/users        mongo.insertUser          2.37 ms   2.56 ms
-GET  /api/products           mongo.findProducts        1.93 ms   2.01 ms
-POST /api/products           mongo.insertProduct       2.01 ms   2.17 ms
-
-Arranque de la API: lista en ~281 ms (conexion Postgres 21.4 ms, conexion Mongo 21.8 ms)
+ProductStore con 10.000 productos (antes -> despues de arreglarlo):
+- list()      353 ms   -> 8.3 ms
+- getBySku    64.7 us  -> 0.18 us
+- create      46 us    -> 1.3 us
+- update      29.9 us  -> 0.53 us
+- getById     0.19 us  (ya era rapido)
 
 
-3. TIEMPO DE LOS SERVICIOS EN MEMORIA (benchmarks Vitest, 10.000 productos)
-----------------------------------------------------------------------------
-Operacion                          Antes        Despues      Mejora
-ProductStore.getById               0.19 us      0.19 us      igual
-ProductStore.getBySku              64.66 us     0.18 us      365x
-ProductStore.create + remove       46.03 us     1.33 us      35x
-ProductStore.update(price)         29.86 us     0.53 us      57x
-ProductStore.adjustStock           0.36 us      0.37 us      igual
-ProductStore.list() sin filtros    353.17 ms    8.28 ms      43x
-ProductStore.list(filtros)         18.38 ms     0.55 ms      34x
-ProductStore.list(search)          10.14 ms     0.57 ms      18x
-parsePagination                    0.06-0.13 us              (despreciable)
+Hallazgos
+---------
+1. list() era muy lento porque localeCompare crea un comparador nuevo cada vez
+   que compara dos productos. Lo cambie por un Intl.Collator que se crea una
+   sola vez y quedo 43 veces mas rapido.
+
+2. Para buscar por sku se recorrian todos los productos. Agregue un Map de
+   sku -> id y ahora buscar, crear y actualizar es mucho mas rapido.
+
+3. Con la trazabilidad vi que en /api/postgres/users se hacia un CREATE TABLE
+   en cada peticion, y eso era casi la mitad del tiempo. Ahora se hace una sola
+   vez y el endpoint paso de 1249 a 1778 peticiones por segundo.
+
+4. GET /api/products no tiene paginacion, entonces cuando hay muchos productos
+   se pone lento (con 2060 productos tardaba 54 ms). No lo cambie, lo deje
+   anotado.
 
 
-4. HALLAZGOS
+Validaciones
 ------------
-Hallazgo 1 - Ordenamiento lento en ProductStore.list()
-  Como se encontro: benchmark con 10.000 productos, list() tardaba 353 ms
-                    (bloquea el servidor un tercio de segundo).
-  Causa           : localeCompare("es", {...}) crea un Intl.Collator nuevo en
-                    cada comparacion del sort (~130.000 veces con 10k productos).
-  Solucion        : crear el Intl.Collator una sola vez y reutilizarlo; los
-                    5 filtros encadenados quedaron en un solo recorrido.
-  Resultado       : 353 ms -> 8.28 ms (43x mas rapido). Mismo orden de resultados.
-
-Hallazgo 2 - Busqueda por sku lineal (O(n))
-  Como se encontro: getBySku, create y update se volvian mas lentos a medida
-                    que crecia el almacen (0.7 us con 100 -> 64.7 us con 10.000).
-  Causa           : para buscar un sku se recorria todo el almacen.
-  Solucion        : indice Map sku -> id que se actualiza en create, update y remove.
-  Resultado       : getBySku 365x, create 35x y update 57x mas rapidos; ahora
-                    tardan lo mismo con 100 que con 10.000 productos.
-
-Hallazgo 3 - CREATE TABLE en cada peticion (encontrado con la trazabilidad)
-  Como se encontro: el header Server-Timing de GET /api/postgres/users mostro
-                    que pg.ensureUsersTable se llevaba el 48% del tiempo del servidor.
-  Causa           : CREATE TABLE IF NOT EXISTS se ejecutaba en cada GET y POST
-                    de /api/postgres/users.
-  Solucion        : ejecutarlo una sola vez al primer uso; si falla, se
-                    reintenta en la siguiente peticion.
-  Resultado       : GET /api/postgres/users  1249 -> 1778 peticiones/s (+42%),
-                    p95 12.25 -> 8.78 ms, tiempo de servidor 4.34 -> 1.92 ms.
-                    POST /api/postgres/users 1343 -> 1595 peticiones/s (+19%).
-                    CPU pico de Postgres 28% -> 9%.
-
-Hallazgo 4 - GET /api/products sin paginacion
-  Como se encontro: con 2.060 productos en la base, el endpoint paso de 5.9 ms
-                    a 54.6 ms en promedio (182 peticiones/s en vez de ~1.700).
-  Causa           : devuelve todos los productos en cada peticion.
-  Recomendacion   : paginar con parsePagination (?page=&limit=) como en /users.
-
-
-5. VALIDACIONES
----------------
-Pruebas automaticas (local)
-- Tests generales: 36 pasan (8 originales + 28 nuevos de trazabilidad).
-- Practica productos: 32/32 pasan.
-- Typecheck y build sin errores.
-
-Pruebas que cubren la trazabilidad
-- Cada respuesta trae un X-Trace-Id nuevo, y se respeta el que manda el cliente.
-- Un id invalido (ej. "<script>") se reemplaza por un UUID.
-- Server-Timing trae un tramo por cada consulta a la base de datos.
-- Si la base de datos falla, el tramo queda registrado con el error.
-- Dos peticiones al mismo tiempo no mezclan sus tramos.
-- El CREATE TABLE corre una sola vez y se reintenta si falla.
-- El indice por sku sigue correcto al cambiar el sku, borrar o hacer un update invalido.
-
-Pruebas de carga (Docker)
-- 18.000 peticiones medidas (antes y despues), 0 errores.
-- Bases de datos reiniciadas antes de cada corrida para comparar en igualdad.
-- Los endpoints que no se cambiaron variaron menos de +-7% (ruido normal),
-  lo que confirma que la mejora viene de los cambios.
-
-CI en GitHub Actions (PR #125)
-- Typecheck, tests y build ....... OK
-- Practica productos ............. OK
-- Rendimiento de servicios ....... OK
+- npm test: 36 tests pasan (agregue 28 para la trazabilidad).
+- npm run test:productos: 32/32 pasan.
+- typecheck y build sin errores.
+- En las pruebas de carga no hubo ningun error.
+- Los checks del PR en GitHub Actions pasaron.
