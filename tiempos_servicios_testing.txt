@@ -1,0 +1,47 @@
+====================================================================
+REPORTE DE TIEMPOS DE EJECUCIÓN POR SERVICIO (TESTS QUE PASAN)
+Fecha de ejecución: 11/11/2026, 11:43:13 p. m.
+====================================================================
+
+SERVICIO / SUITE: product-store.test.ts
+- Tests aprobados: 32
+- Tiempo total del servicio: 22.29 ms
+- Desglose por caso de prueba:
+    * [PASS] asigna id, valores por defecto y la fecha actual -> 3.11 ms
+    * [PASS] conserva el stock indicado y un precio decimal -> 0.32 ms
+    * [PASS] normaliza nombre, sku y categoría -> 0.51 ms
+    * [PASS] rechaza un nombre vacío y no pierde lo ya guardado -> 0.88 ms
+    * [PASS] acepta 80 caracteres en el nombre y rechaza 81 -> 0.31 ms
+    * [PASS] rechaza un precio ausente o negativo, y acepta cero -> 0.34 ms
+    * [PASS] rechaza un precio NaN o infinito -> 0.31 ms
+    * [PASS] rechaza un stock negativo o fraccionario -> 0.25 ms
+    * [PASS] rechaza un sku vacío o con formato inválido -> 7.57 ms
+    * [PASS] rechaza un sku duplicado aunque cambie el uso de mayúsculas -> 0.49 ms
+    * [PASS] no comparte datos entre instancias -> 0.57 ms
+    * [PASS] devuelve copias y no conserva el objeto de entrada -> 1.13 ms
+    * [PASS] getById devuelve el producto o null -> 0.14 ms
+    * [PASS] getBySku normaliza la búsqueda y devuelve null si no existe -> 0.14 ms
+    * [PASS] list ordena por nombre en español y, si empatan, por sku -> 0.20 ms
+    * [PASS] list filtra por búsqueda, categoría y activo -> 0.36 ms
+    * [PASS] un filtro de texto en blanco no descarta productos -> 0.15 ms
+    * [PASS] list incluye los extremos del rango de precio -> 0.15 ms
+    * [PASS] list rechaza un rango de precio inválido -> 0.34 ms
+    * [PASS] cambia solo lo enviado y renueva updatedAt -> 0.44 ms
+    * [PASS] acepta el mismo sku en otra combinación de mayúsculas -> 0.35 ms
+    * [PASS] rechaza el sku de otro producto y no deja cambios a medias -> 0.38 ms
+    * [PASS] lanza NOT_FOUND si el id no existe -> 0.15 ms
+    * [PASS] rechaza datos inválidos y no modifica el producto -> 0.38 ms
+    * [PASS] puede desactivar el producto y dejar la categoría vacía -> 0.33 ms
+    * [PASS] un update sin campos no cambia updatedAt -> 0.80 ms
+    * [PASS] borra solo ese producto y devuelve false si no existe -> 0.20 ms
+    * [PASS] permite reutilizar el sku con otro id -> 0.14 ms
+    * [PASS] suma y resta, y puede dejar el stock en cero -> 0.71 ms
+    * [PASS] rechaza un resultado negativo y no cambia el producto -> 0.47 ms
+    * [PASS] rechaza un delta que no sea un entero distinto de cero -> 0.51 ms
+    * [PASS] lanza NOT_FOUND si el id no existe -> 0.15 ms
+
+--------------------------------------------------------------------
+RESUMEN GENERAL:
+- Total tests aprobados: 32
+- Tiempo acumulado de todos los servicios: 22.29 ms
+====================================================================
