@@ -1,0 +1,27 @@
+escenario,servicio,iteraciones,promedio_ms,mediana_ms,p95_ms,min_ms,max_ms,ops_s
+"ProductStore (100 productos)","create",1000,0.006914,0.005000,0.008000,0.004300,1.194400,144630
+"ProductStore (100 productos)","getById",1000,0.001108,0.001000,0.001100,0.000800,0.113700,902201
+"ProductStore (100 productos)","getBySku",1000,0.001350,0.001200,0.001500,0.001100,0.031100,740850
+"ProductStore (100 productos)","list (sin filtros)",200,4.040659,3.678500,5.318100,3.387100,11.556100,247
+"ProductStore (100 productos)","list (search + category + precio)",200,0.170000,0.121400,0.242100,0.118000,6.432600,5882
+"ProductStore (100 productos)","update",1000,0.002087,0.001700,0.003500,0.001500,0.128800,479088
+"ProductStore (100 productos)","adjustStock",1000,0.001502,0.001500,0.001700,0.001300,0.016000,665735
+"ProductStore (100 productos)","remove",1000,0.000499,0.000400,0.000600,0.000300,0.047900,2004008
+"ProductStore (1.000 productos)","create",1000,0.008644,0.003600,0.006500,0.002900,4.286200,115693
+"ProductStore (1.000 productos)","getById",1000,0.000680,0.000600,0.000800,0.000500,0.043000,1470805
+"ProductStore (1.000 productos)","getBySku",1000,0.001046,0.001000,0.001200,0.000800,0.028900,956206
+"ProductStore (1.000 productos)","list (sin filtros)",200,28.572661,27.043800,38.991200,25.761300,40.472900,35
+"ProductStore (1.000 productos)","list (search + category + precio)",200,4.086452,3.835100,4.274500,3.717400,12.833800,245
+"ProductStore (1.000 productos)","update",1000,0.001691,0.001700,0.001900,0.001400,0.010800,591296
+"ProductStore (1.000 productos)","adjustStock",1000,0.001734,0.001500,0.003100,0.001300,0.014000,576668
+"ProductStore (1.000 productos)","remove",1000,0.000556,0.000400,0.000500,0.000300,0.086200,1798885
+"ProductStore (10.000 productos)","create",1000,0.003579,0.002800,0.005500,0.002400,0.110800,279384
+"ProductStore (10.000 productos)","getById",1000,0.001016,0.000800,0.001400,0.000500,0.074500,984543
+"ProductStore (10.000 productos)","getBySku",1000,0.001545,0.001200,0.003300,0.000800,0.058100,647082
+"ProductStore (10.000 productos)","list (sin filtros)",50,243.158858,247.098900,260.649400,225.144300,268.935300,4
+"ProductStore (10.000 productos)","list (search + category + precio)",50,26.507844,25.453200,36.572000,24.664700,36.862300,38
+"ProductStore (10.000 productos)","update",1000,0.002034,0.001800,0.002400,0.001400,0.118000,491594
+"ProductStore (10.000 productos)","adjustStock",1000,0.001825,0.001500,0.001900,0.001100,0.145200,548035
+"ProductStore (10.000 productos)","remove",1000,0.000374,0.000300,0.000400,0.000200,0.052500,2673082
+"pagination.service","parsePagination (válido)",1000,0.000529,0.000500,0.000500,0.000400,0.033700,1889645
+"pagination.service","parsePagination (inválido -> defecto)",1000,0.000515,0.000500,0.000500,0.000400,0.031500,1941371
