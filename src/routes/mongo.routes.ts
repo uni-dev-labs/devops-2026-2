@@ -1,13 +1,14 @@
 import { Router, type Request, type Response } from "express";
 import { getMongoDb } from "../db/mongo.js";
 import { parsePagination } from "../services/pagination.service.js";
+import { withSpan } from "../observability/tracer.js";
 
 export const mongoRouter = Router();
 
 mongoRouter.get("/health", async (_req: Request, res: Response) => {
   try {
     const db = getMongoDb();
-    const ping = await db.command({ ping: 1 });
+    const ping = await withSpan("mongo.ping", () => db.command({ ping: 1 }));
     res.json({
       status: "ok",
       database: "mongodb",
@@ -25,16 +26,18 @@ mongoRouter.get("/health", async (_req: Request, res: Response) => {
 
 mongoRouter.get("/users", async (req: Request, res: Response) => {
   try {
-    const { limit, offset } = parsePagination(req.query);
+    const { limit, offset } = withSpan("pagination.parse", () => parsePagination(req.query));
 
     const db = getMongoDb();
-    const users = await db
-      .collection("users")
-      .find({})
-      .project({ name: 1, email: 1, createdAt: 1 })
-      .skip(offset)
-      .limit(limit)
-      .toArray();
+    const users = await withSpan("mongo.findUsers", () =>
+      db
+        .collection("users")
+        .find({})
+        .project({ name: 1, email: 1, createdAt: 1 })
+        .skip(offset)
+        .limit(limit)
+        .toArray(),
+    );
 
     res.json({
       database: "mongodb",
@@ -67,7 +70,7 @@ mongoRouter.post("/users", async (req: Request, res: Response) => {
       createdAt: new Date(),
     };
 
-    const result = await db.collection("users").insertOne(doc);
+    const result = await withSpan("mongo.insertUser", () => db.collection("users").insertOne(doc));
 
     res.status(201).json({
       database: "mongodb",
