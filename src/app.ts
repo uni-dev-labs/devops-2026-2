@@ -3,15 +3,27 @@ import cors from "cors";
 import { postgresRouter } from "./routes/postgres.routes.js";
 import { mongoRouter } from "./routes/mongo.routes.js";
 import { productsRouter } from "./routes/products.routes.js";
+import { getMetrics, resetMetrics, timingMiddleware } from "./middlewares/timing.middleware.js";
 
 export function createApp() {
   const app = express();
 
   app.use(cors());
   app.use(express.json());
+  app.use(timingMiddleware);
 
   app.get("/health", (_req, res) => {
     res.json({ status: "ok", service: "express-ts-api" });
+  });
+
+  // Resumen de cuánto se demora cada servicio y el cálculo general.
+  app.get("/api/metrics", (_req, res) => {
+    res.json(getMetrics());
+  });
+
+  app.delete("/api/metrics", (_req, res) => {
+    resetMetrics();
+    res.status(204).end();
   });
 
   app.use("/api/postgres", postgresRouter);
