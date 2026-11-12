@@ -13,7 +13,10 @@
     "test:productos": "vitest run --config vitest.productos.config.ts --reporter=default --reporter=json --outputFile=productos-results.json",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down",
-    "docker:logs": "docker compose logs -f api"
+    "docker:logs": "docker compose logs -f api",
+    "medir": "tsx debug/medir-servicios.ts",
+    "medir:perfil": "node --cpu-prof --cpu-prof-dir=debug/perfiles --import tsx debug/medir-servicios.ts",
+    "medir:resumen": "node debug/resumen-perfil.mjs"
   },
   "keywords": [
     "express",
