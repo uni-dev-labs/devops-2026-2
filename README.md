@@ -159,3 +159,29 @@ Body esperado en POST `/users`:
 - **mongo** — MongoDB 7, expuesto en el puerto `27017`
 
 Dentro de la red de Docker, la API se conecta a las bases usando el nombre del servicio (`postgres` y `mongo`), no `localhost`.
+## Trazabilidad de tiempos por servicio
+
+### 1. Servicios del `ProductStore` (script)
+
+```bash
+npm run trazabilidad          # 1000 iteraciones por servicio
+npm run trazabilidad -- 5000  # iteraciones personalizadas
+```
+
+Mide `create`, `getById`, `getBySku`, `list` (sin y con filtros), `update`, `adjustStock` y `remove`.
+Por cada servicio calcula promedio, mínimo, máximo, p50, p95, tiempo total, operaciones por segundo y % del tiempo total.
+Al final muestra el **cálculo general** (operaciones totales, tiempo total, promedio general, throughput, servicio más lento y más rápido).
+Los reportes se guardan en `reports/trazabilidad/` (`.csv` y `.md`).
+
+### 2. Endpoints de la API (middleware)
+
+Cada petición pasa por `src/middlewares/trazabilidad.ts`, que:
+
+- imprime en consola `[trazabilidad] MÉTODO ruta -> status en X ms`,
+- agrega la cabecera `X-Response-Time` a la respuesta,
+- acumula tiempos por endpoint.
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/api/trazabilidad` | Resumen por servicio (llamadas, promedio, mín, máx, p95, total) + cálculo general |
+| DELETE | `/api/trazabilidad` | Reinicia las métricas |
