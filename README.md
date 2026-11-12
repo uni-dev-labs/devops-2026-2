@@ -64,6 +64,7 @@ npm start
 | GET | `/api/mongo/health` | Health de MongoDB |
 | GET | `/api/mongo/users?page=1&limit=10` | Lista usuarios paginados (Mongo) |
 | POST | `/api/mongo/users` | Crea usuario (Mongo) |
+| GET | `/api/performance?iterations=1000` | Mide el tiempo de los servicios (ver `src/routes/README.md`) |
 
 ### Ejemplos
 
